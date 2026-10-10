@@ -1,0 +1,58 @@
+== fa=1 kv=f16
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = Samsung Xclipse 550 (Samsung Proprietary driver) | uma: 1 | fp16: 1 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none
+load_backend: loaded Vulkan backend from /data/data/com.termux/files/usr/lib/libggml-vulkan.so
+load_backend: loaded CPU backend from /data/data/com.termux/files/usr/lib/libggml-cpu.so
+| model                          |       size |     params | backend    | ngl | threads |  fa |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --: | --------------: | -------------------: |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |  99 |       3 |   1 |           pp128 |      1468.12 ± 11.76 |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |  99 |       3 |   1 |            tg64 |        101.64 ± 0.16 |
+
+build: unknown (0)
+rc=0
+== fa=1 kv=q8_0
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = Samsung Xclipse 550 (Samsung Proprietary driver) | uma: 1 | fp16: 1 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none
+load_backend: loaded Vulkan backend from /data/data/com.termux/files/usr/lib/libggml-vulkan.so
+load_backend: loaded CPU backend from /data/data/com.termux/files/usr/lib/libggml-cpu.so
+| model                          |       size |     params | backend    | ngl | threads | type_k | type_v |  fa |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | -----: | -----: | --: | --------------: | -------------------: |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |  99 |       3 |   q8_0 |   q8_0 |   1 |           pp128 |     1224.66 ± 255.11 |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |  99 |       3 |   q8_0 |   q8_0 |   1 |            tg64 |         69.54 ± 2.96 |
+
+build: unknown (0)
+rc=0
+== fa=0 kv=f16
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = Samsung Xclipse 550 (Samsung Proprietary driver) | uma: 1 | fp16: 1 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none
+load_backend: loaded Vulkan backend from /data/data/com.termux/files/usr/lib/libggml-vulkan.so
+load_backend: loaded CPU backend from /data/data/com.termux/files/usr/lib/libggml-cpu.so
+| model                          |       size |     params | backend    | ngl | threads |  fa |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --: | --------------: | -------------------: |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |  99 |       3 |   0 |           pp128 |      1342.38 ± 12.54 |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |  99 |       3 |   0 |            tg64 |         99.69 ± 0.62 |
+
+build: unknown (0)
+rc=0
+== fa=0 kv=q8_0
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = Samsung Xclipse 550 (Samsung Proprietary driver) | uma: 1 | fp16: 1 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none
+load_backend: loaded Vulkan backend from /data/data/com.termux/files/usr/lib/libggml-vulkan.so
+load_backend: loaded CPU backend from /data/data/com.termux/files/usr/lib/libggml-cpu.so
+llama_init_from_model: quantized V cache requires flash_attn to be enabled
+llama_bench: error: failed to create context with model 'SmolLM2-135M-Instruct-Q4_0.gguf'
+| model                          |       size |     params | backend    | ngl | threads | type_k | type_v |  fa |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | -----: | -----: | --: | --------------: | -------------------: |
+rc=1
+== cpu-only kv q8_0
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = Samsung Xclipse 550 (Samsung Proprietary driver) | uma: 1 | fp16: 1 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none
+load_backend: loaded Vulkan backend from /data/data/com.termux/files/usr/lib/libggml-vulkan.so
+load_backend: loaded CPU backend from /data/data/com.termux/files/usr/lib/libggml-cpu.so
+| model                          |       size |     params | backend    | ngl | threads | type_k | type_v |  fa |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | -----: | -----: | --: | --------------: | -------------------: |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |   0 |       3 |   q8_0 |   q8_0 |   1 |           pp128 |       150.66 ± 26.75 |
+| llama 256M Q4_0                |  85.93 MiB |   134.52 M | Vulkan     |   0 |       3 |   q8_0 |   q8_0 |   1 |            tg64 |          1.79 ± 0.00 |
+
+build: unknown (0)
+rc=0
