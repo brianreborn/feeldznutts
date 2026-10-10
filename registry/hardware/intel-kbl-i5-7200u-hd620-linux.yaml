@@ -20,5 +20,5 @@ gotchas:
 power:
   package_tdp_w: {value: 15, cTDP_down_w: 7.5, source: "https://www.intel.com/content/www/us/en/products/sku/95443/intel-core-i57200u-processor-3m-cache-up-to-3-10-ghz/specifications.html"}
   igpu: "shares the 15 W package budget with the CPU cores; no separate figure"
-  hook: "RAPL /sys/class/powercap/intel-rapl:0/energy_uj (often root-only on recent kernels)"
+  hook: "RAPL energy_uj is root-only (0400) on this kernel - checked 2026-10-10; needs a udev rule or sudo, not done"
 records: {hardware_profile: intel-kbl-i5-7200u-hd620-linux}
