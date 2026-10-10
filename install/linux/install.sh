@@ -138,8 +138,12 @@ else
   KIND=laptop; [ -d /sys/class/power_supply/BAT0 ] || KIND=desktop
   python3 "$REPO/scripts/host_measure.py" --name "$NAME" --kind "$KIND" --graph "$REPO/graph.yaml" $MFLAGS $FORCE_HOST
   # numpy (LittleBit runtime): the spec depends only on the x86-64 level (scripts/cpu_level.py).
-  NPSPEC=$(python3 "$REPO/scripts/cpu_level.py" --numpy-spec 2>/dev/null || echo numpy)
-  python3 -c 'import numpy' 2>/dev/null || python3 -m pip install --user --quiet "$NPSPEC" 2>/dev/null || say "note: numpy not installed (optional; pip install --user '$NPSPEC')"
+  # pre-v2 x86 tries our cpu-baseline=none wheel first when one matches this Python, then numpy<2.4.
+  NPCANDS=$(python3 "$REPO/scripts/cpu_level.py" --numpy-candidates 2>/dev/null || echo numpy)
+  if ! python3 -c 'import numpy' 2>/dev/null; then
+    NPOK=0; for NPSPEC in $NPCANDS; do python3 -m pip install --user --quiet "$NPSPEC" 2>/dev/null && python3 -c 'import numpy' 2>/dev/null && { NPOK=1; break; }; done
+    [ "$NPOK" = 1 ] || say "note: numpy not installed (optional; pip install --user '$NPSPEC')"
+  fi
   if python3 -c 'import yaml' 2>/dev/null; then
     python3 "$REPO/scripts/validate_graph.py" --no-files "$REPO/graph.yaml" || say "warning: graph validation reported problems (see above)"
   fi

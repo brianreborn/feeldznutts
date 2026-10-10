@@ -174,9 +174,14 @@ if (Test-Path $graph) {
   } else { Say 'python not found: graph validation skipped' }
   if ($py) {
     # numpy (LittleBit runtime): spec depends only on the x86-64 level (scripts\cpu_level.py)
-    $np = (& python (Join-Path $repo 'scripts\cpu_level.py') --numpy-spec 2>$null); if (-not $np) { $np = 'numpy' }
+    # pre-v2 x86: our cpu-baseline=none numpy 2.x wheel from the release first, then numpy<2.4
+    $cands = @(& python (Join-Path $repo 'scripts\cpu_level.py') --numpy-candidates 2>$null | Where-Object { $_ }); if (-not $cands) { $cands = @('numpy') }
     & python -c 'import numpy' 2>$null
-    if ($LASTEXITCODE -and $PSCmdlet.ShouldProcess('python', "pip install --user $np")) { & python -m pip install --user --quiet --no-warn-script-location $np; if ($LASTEXITCODE) { Say "note: numpy not installed (optional; pip install --user $np)" } }
+    if ($LASTEXITCODE -and $PSCmdlet.ShouldProcess('python', "pip install --user $($cands -join ' || ')")) {
+      $ok = $false
+      foreach ($np in $cands) { & python -m pip install --user --quiet --no-warn-script-location $np; if (-not $LASTEXITCODE) { & python -c 'import numpy' 2>$null; if (-not $LASTEXITCODE) { $ok = $true; break } } }
+      if (-not $ok) { Say "note: numpy not installed (optional; pip install --user $($cands[-1]))" }
+    }
   }
 } else { Say "graph.yaml not present yet (dry-run?): would measure into $graph" }
 

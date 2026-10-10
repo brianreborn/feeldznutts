@@ -10,7 +10,10 @@ https://numpy.org/doc/stable/reference/simd/build-options.html
 NumPy 2.0-2.3 used an SSE3 baseline, so "numpy<2.4" is the newest release that loads on these CPUs.
 
 The numpy choice depends ONLY on the level: x86 below v2 gets numpy<2.4, everything else gets plain numpy.
-Usage: cpu_level.py [--json] [--numpy-spec] [--cpuinfo FILE] [--machine ARCH]
+On v0/v1 x86 we also host our own numpy 2.4+ wheel built with -Dcpu-baseline=none
+(scripts/build_numpy_wheel.ps1); --numpy-candidates lists it first when this Python's
+wheel tag matches, then numpy<2.4 as the fallback.
+Usage: cpu_level.py [--json] [--numpy-spec] [--numpy-candidates] [--cpuinfo FILE] [--machine ARCH]
 """
 import json, os, platform, sys
 
@@ -23,6 +26,20 @@ LEVELS = [
 ]
 NUMPY_OLD_X86 = "numpy<2.4"
 NUMPY_DEFAULT = "numpy"
+# Our cpu-baseline=none wheels for pre-v2 x86, keyed by "<platform>-<cpXY>" (see scripts/build_numpy_wheel.ps1).
+RELEASE = "https://github.com/brianreborn/familia/releases/download/v0.1.0-rc2/"
+OLD_X86_WHEELS = {"win_amd64-cp312": RELEASE + "numpy-2.5.3-cp312-cp312-win_amd64.whl"}
+
+def wheel_tag():
+    import sysconfig
+    return "%s-cp%d%d" % (sysconfig.get_platform().replace("-", "_").replace(".", "_"), *sys.version_info[:2])
+
+def numpy_candidates(level, tag=None):
+    """pip specs to try in order. Depends on the x86-64 level; the wheel tag only picks which file."""
+    if level in ("v0", "v1"):
+        url = OLD_X86_WHEELS.get(tag or wheel_tag())
+        return ([url] if url else []) + [NUMPY_OLD_X86]
+    return [NUMPY_DEFAULT]
 
 def is_x86(machine=None):
     m = (machine or platform.machine()).lower()
@@ -115,11 +132,13 @@ def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser(description="x86-64 level -> numpy spec")
     ap.add_argument("--json", action="store_true"); ap.add_argument("--numpy-spec", action="store_true")
+    ap.add_argument("--numpy-candidates", action="store_true", help="one pip spec per line, try in order")
     ap.add_argument("--cpuinfo", help="read flags from this cpuinfo file (tests)")
     ap.add_argument("--machine", help="override platform.machine() (tests)")
     a = ap.parse_args(argv)
     r = detect(a.cpuinfo, a.machine)
-    if a.numpy_spec: print(r["numpy"])
+    if a.numpy_candidates: print("\n".join(numpy_candidates(r["level"])))
+    elif a.numpy_spec: print(r["numpy"])
     elif a.json: print(json.dumps(r))
     else: print("x86-64 level: %s (arch %s, from %s) -> %s" % (r["level"], r["arch"], r["source"], r["numpy"]))
     return 0

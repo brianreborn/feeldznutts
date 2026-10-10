@@ -41,3 +41,10 @@ def test_cli_numpy_spec(tmp_path):
 
 def test_this_machine_runs():
     assert cl.detect()["level"] in ("v0", "v1", "v2", "v3", "v4", "n/a", "unknown")
+
+def test_candidates_old_x86_prefers_our_wheel():
+    c = cl.numpy_candidates("v1", tag="win_amd64-cp312")
+    assert c[0].endswith("numpy-2.5.3-cp312-cp312-win_amd64.whl") and c[-1] == "numpy<2.4"
+    assert cl.numpy_candidates("v0", tag="linux_x86_64-cp311") == ["numpy<2.4"]
+    for lvl in ("v2", "v3", "v4", "n/a", "unknown"):
+        assert cl.numpy_candidates(lvl, tag="win_amd64-cp312") == ["numpy"]
