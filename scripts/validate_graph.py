@@ -217,6 +217,10 @@ def main(argv):
     if errs: return 1
     if "--args" in argv:
         print(" ".join(server_args(graph, argv[argv.index("--args") + 1]))); return 0
+    try:  # model registry evidence (docs/model-registry.md): warn only, never fail
+        import registry as _reg
+        for w in _reg.graph_warnings(graph): print(f"graph: WARNING: {w}", file=sys.stderr)
+    except Exception as e: print(f"graph: WARNING: registry check skipped: {e}", file=sys.stderr)
     est = ", ".join(f"{h} est. {t:.0f} MiB" for h, t in totals.items()) or "file checks skipped"
     print(f"graph: OK ({len(graph['nodes'])} node(s); {est})")
     return 0

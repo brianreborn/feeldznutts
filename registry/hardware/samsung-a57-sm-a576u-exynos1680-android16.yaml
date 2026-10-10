@@ -1,0 +1,37 @@
+# Shareable hardware profile. No hostnames, IPs, usernames or keys.
+id: samsung-a57-sm-a576u-exynos1680-android16
+identity:
+  device_model: Samsung Galaxy A57 5G
+  sku: [SM-A576U]                 # other SKUs (SM-A576B/U1/W...) untested; match warns
+  board: erd8865                  # ro.board.platform
+  soc: Samsung Exynos 1680 (s5e8865)
+  cpu: 8 cores (3x Cortex-A520, 5x Cortex-A720); Termux nproc reports 3
+  cpu_match: ['Cortex-A520', 'Cortex-A720', '0xd80', '0xd81', 'erd8865', 's5e8865']
+  gpu: Samsung Xclipse 550
+  gpu_driver: Samsung Proprietary (SPAL) 25.4.7
+  os: android-16 (Termux, aarch64)
+  ram_mib: 7430
+  runtime_tested: ['Termux llama-cpp 0.5.0', 'Termux llama-cpp 0.6.0']
+known_good_setup:
+  - "pkg install llama-cpp llama-cpp-backend-vulkan"
+  - "mkdir -p ~/.vk && ln -sf /system/lib64/libvulkan.so ~/.vk/libvulkan.so && ln -sf /system/lib64/libvulkan.so ~/.vk/libvulkan.so.1"
+  - "export LD_LIBRARY_PATH=$HOME/.vk  # both names are needed; Termux's own loader only sees llvmpipe"
+  - "termux-wake-lock before any long run; log on the phone and poll"
+best_settings:
+  decision:   # SmolLM2-135M-Instruct Q4_K_M
+    backend: vulkan
+    ngl: 99
+    threads: 3
+    tg_tps: "66-79 (measured)"
+    pp_tps: "823-1406 (measured)"
+gotchas:
+  - OpenCL unusable from Termux - vendor libSGPUOpenCL.so blocked by the linker namespace (clinfo shows 0 platforms).
+  - nproc inside Termux = 3 of 8 cores (cpuset); -t above 3 is not useful.
+  - Phones drop off Wi-Fi during long runs without termux-wake-lock (and screen-off Wi-Fi policy).
+  - Same hardware is not same software - record the Termux llama-cpp pkg version with every result (0.5.0 vs 0.6.0 seen).
+  - Reserve ~5 GiB for Android + apps; MemAvailable was ~2.1-2.6 GiB at idle.
+power:
+  battery: {capacity_mah: 5000, source: "https://www.samsung.com/uk/smartphones/galaxy-a/galaxy-a57-5g-awesome-navy-512gb-sm-a576bdbheub/"}
+  charger_w: {min: 10, max: 45, source: "same Samsung spec page ('Power Required for Charging 10 ~ 45 W')"}
+  inference_w: {value: null, measured: false, estimate_w: 5.0, method: "assumed SoC sustained load for a mid-range 4 nm phone under GPU compute; not from a spec sheet", hook: "termux-battery-status current/voltage, or /sys/class/power_supply/battery/{current_now,voltage_now}"}
+records: {hardware_profile: samsung-a57-sm-a576u-exynos1680-android16}

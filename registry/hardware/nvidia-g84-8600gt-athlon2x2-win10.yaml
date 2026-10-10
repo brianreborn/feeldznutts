@@ -1,0 +1,28 @@
+id: nvidia-g84-8600gt-athlon2x2-win10
+identity:
+  device_model: desktop with GeForce 8600 GT + AMD Athlon II X2
+  soc: AMD Athlon II X2 B24 (2C/2T)
+  cpu_match: ['Athlon II X2']
+  gpu: NVIDIA GeForce 8600 GT (G84, sm_11, 256 MiB)
+  gpu_driver: '341.92 (WDDM)'
+  os: windows-10
+  ram_mib: 16379
+  runtime_tested: ['gpu-legacy smol_sm11 (familia gpu-legacy/, legacy-GPU branch)', 'llama.cpp b11540 win-cpu']
+known_good_setup:
+  - "No stock backend supports sm_11. Use gpu-legacy (hand-written PTX + CUDA driver API) from the familia legacy-GPU branch (gpu-legacy/)."
+  - "Prepend the mingw bin dir to PATH (libgomp) or run_sm11 fails with 0xC0000135."
+best_settings:
+  decision: {backend: cuda-sm11-ptx, model: SmolLM2-135M Q4_0, kernel: "v6 replay-tuned, 256-thread CTAs (RG16 BG2), 5 rows/thread, Q8 classifier on texture", tg_tps: "15.3-16.9 (measured)"}
+  coder: {backend: cpu, threads: 1, pin: CPU0, note: "GPU worker pinned CPU1; coder keeps ~95-100%"}
+gotchas:
+  - One host sync per op on WDDM caps throughput (4.5 t/s); enqueue the whole forward, wait once per token.
+  - Mapped-memory flag polling never completes on WDDM; use events (cuEventQuery flushes).
+  - Desktop apps (Firefox/Discord HW accel) take VRAM; free swung 8-154 MiB. Keep a 16 MiB margin and refuse to load.
+  - Tune with a replay of the real token order, not a hot loop over one matrix.
+  - Register budget regs*threads <= 8192 or launch fails (CUDA 701).
+power:
+  gpu_board_w: {value: 47, source: "https://www.techpowerup.com/gpu-specs/geforce-8600-gt.c198 (max board power)"}
+  cpu_tdp_w: {value: 65, source: "AMD Athlon II X2 B24 product spec (65 W TDP)"}
+  measured: false
+  note: "nvidia-smi does not support G84 under driver 341.x; GPU power is unmeasured. Wall-meter is the only cheap measurement."
+records: {hardware_profile: nvidia-g84-8600gt-athlon2x2-win10}
