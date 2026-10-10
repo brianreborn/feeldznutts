@@ -102,3 +102,10 @@ A provisional guard killed any run that dropped free RAM below 3.5 GiB. That 3.5
 - **Speculation:** n-gram lookup costs no weights and no measurable RAM. It doubled decode on a copy-heavy prompt, which is the best case. `coder-ngram` in graph.yaml is now `ngram-simple` and stays `planned` until it's measured on real hermes edits. The three server runs bottomed out at 3.43-3.48 GiB free. That counts as **within** the fuzzy ~3.5 GiB target, not a violation.
 - **Draft-model speculation:** Qwen3.5-0.8B as a draft would cost about 530 MiB more, which breaks the floor. Not run.
 
+## L-memcap. Cap model servers with a user scope; earlyoom and zram need one sudo paste (2026-10-10)
+- `scripts/serve.sh <node>` wraps llama-server in `systemd-run --user --scope` with MemoryHigh 2200M, MemoryMax 2600M, MemorySwapMax 0 and oom_score_adj 800. No root is needed. It's on by default on miryam; `FAMILIA_MEMCAP=0` turns it off. It was verified on miryam with a SmolLM2 server.
+- On miryam, sudo needs a password, so earlyoom and zram wait for the user's paste block in docs/ram-safety.md.
+- systemd-oomd was already active as an Ubuntu default. We didn't configure it.
+- The old swap was a 16 MiB partition, and it was full.
+- Idle sampling showed miryam's processes pausing between agent commands: wall time on miryam moved far less than on the controller. The laptop probably suspends when idle. That would also explain the frequent "offline" drops, and it means detached jobs freeze rather than fail. Keep it awake (a ping, or `systemd-inhibit`) during long runs.
+

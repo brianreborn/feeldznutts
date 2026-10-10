@@ -39,7 +39,23 @@ high RAM utilization.
 | coder 64k alone | ~2928 MiB | ~4342 MiB | no warning |
 | coder + embed | ~3479 MiB | ~3791 MiB | no warning (tight) |
 
-## Draft system-level protections (NOT deployed: each needs the user's OK)
+## Deployment status on miryam (2026-10-10)
+
+| layer | status |
+|---|---|
+| `scripts/serve.sh` memcap (systemd-run --user scope, MemoryHigh 2200M / MemoryMax 2600M / MemorySwapMax 0, oom_score_adj 800) | **deployed** (no root). Default on for miryam; set `FAMILIA_MEMCAP=0/1` to override. Verified with a SmolLM2 test server: scope showed MemoryMax=629145600 (600M test cap), oom_score_adj=800 |
+| earlyoom (args below) | approved; needs the user to paste the sudo block (sudo needs a password) |
+| zram-tools (zstd, 25%, prio 100) | approved; same sudo block |
+| systemd-oomd | **not configured by us**. Note that it is already `active` as an Ubuntu default. |
+
+Before deployment, swap was a 16 MiB `/dev/sda3` partition and it was full. swappiness was 60.
+
+Sudo block for miryam (paste into a terminal):
+```
+sudo apt-get install -y earlyoom zram-tools && echo "EARLYOOM_ARGS=\"-m 8,4 -s 10,5 -r 60 --prefer '(^|/)(llama-server|llama-bench|llama-cli)\$' --avoid '(^|/)(gnome-shell|Xwayland|sshd|systemd|grok-bot)\$' -n\"" | sudo tee /etc/default/earlyoom && printf 'ALGO=zstd\nPERCENT=25\nPRIORITY=100\n' | sudo tee /etc/default/zramswap && sudo systemctl enable --now earlyoom && sudo systemctl restart earlyoom zramswap && swapon --show && journalctl -u earlyoom -n 5 --no-pager
+```
+
+## Draft system-level protections (reference)
 
 All need root on miryam. Nothing below has been run. Proposed in order of value.
 
