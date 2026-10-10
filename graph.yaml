@@ -443,7 +443,7 @@ speculative:
     mode: ngram
     target: coder
     spec_type: ngram-simple      # model-free lookup decoding; no extra weights. miryam 2026-10-10, -t 2, repeat-code
-                                 # prompt: 17.4 t/s vs 8.7 none (ngram-mod 16.3); free RAM stayed >3.4 GiB. Real-edit gain TBD.
+                                 # prompt: 17.4 t/s vs 8.7 none (ngram-mod 16.3). Real hermes-style full-file edits: 17.9-18.4 vs 8.2-8.4 (2.2x).
 
 gateways:
   roomz:

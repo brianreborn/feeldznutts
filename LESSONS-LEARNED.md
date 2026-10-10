@@ -114,5 +114,7 @@ A provisional guard killed any run that dropped free RAM below 3.5 GiB. That 3.5
 - On miryam, sudo needs a password, so earlyoom and zram wait for the user's paste block in docs/ram-safety.md.
 - systemd-oomd was already active as an Ubuntu default. We didn't configure it.
 - The old swap was a 16 MiB partition, and it was full.
-- Idle sampling showed miryam's processes pausing between agent commands: wall time on miryam moved far less than on the controller. The laptop probably suspends when idle. That would also explain the frequent "offline" drops, and it means detached jobs freeze rather than fail. Keep it awake (a ping, or `systemd-inhibit`) during long runs.
+- **Correction:** I earlier suspected that miryam suspends when idle. It doesn't. The idle sampler logged 60 samples at a steady 10 s over 10 minutes. The agent's "offline" drops come from the app connection; local jobs keep running.
+- **Idle load (10 min, normal desktop use):** MemAvailable min / median / max 4119 / 4281 / 4330 MiB, page cache about 4.2 GiB, Shmem about 0.7 GiB, swap 16 MiB and full. Biggest processes: Grok Bot app 0.33-0.44 GiB (growing), snap-store 0.34, gnome-shell 0.19. Loading the coder (a short bench) took MemAvailable down to 3631 MiB, and after unload it recovered to 4211 MiB.
+- **n-gram speculation on real edits** (memcapped server, -t 2, 4 hermes-style full-file rewrites, 400 tokens each): none 8.2-8.4, **ngram-simple 17.9-18.4** (2.2x), ngram-mod 17.5-18.0 tok/s. Every draft was accepted, because full-file rewrites are mostly copying. With the server running, MemAvailable bottomed out at 2.89 GiB. That's within the fuzzy guidance, and the scope cap held the server to 2.6 GiB.
 
