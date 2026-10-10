@@ -102,3 +102,10 @@ A provisional guard killed any run that dropped free RAM below 3.5 GiB. That 3.5
 - **Speculation:** n-gram lookup costs no weights and no measurable RAM. It doubled decode on a copy-heavy prompt, which is the best case. `coder-ngram` in graph.yaml is now `ngram-simple` and stays `planned` until it's measured on real hermes edits. The three server runs bottomed out at 3.43-3.48 GiB free. That counts as **within** the fuzzy ~3.5 GiB target, not a violation.
 - **Draft-model speculation:** Qwen3.5-0.8B as a draft would cost about 530 MiB more, which breaks the floor. Not run.
 
+## L-kvq8. Quantized KV on the A57 is a loss, and llama-bench changes its table shape (2026-10-10)
+- Quantized V cache requires flash-attn. With `-fa 0 -ctv q8_0` llama.cpp refuses to create the context.
+- With `-fa 1`, q8_0 KV works but is slower at 135M on Xclipse 550: tg 69.5 vs 101.6 t/s, pp 1225 vs 1468. Keep f16 KV on phones unless ctx RAM forces it.
+- The earlier "silent" q8_0 failure was mostly our parser: when the KV type isn't f16, llama-bench adds `type_k`/`type_v` columns, so fixed-column parsing dropped those rows. Use `-o csv`/`-o json` and parse by column name.
+- Sustained 5 min tg128 on phone8 drifts from ~85 to ~75 t/s after ~4 min (mild throttle). Thermal zones aren't readable from Termux. `termux-battery-status` hangs without the Termux:API app (the pkg alone isn't enough).
+- Identify phones by host key plus boot_id, not address. Termux sshd ignores the login name, so the user isn't a reliable identifier.
+

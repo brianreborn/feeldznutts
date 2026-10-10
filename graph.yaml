@@ -146,6 +146,7 @@ hosts:
       Samsung Galaxy A57 (SM-A576U, a57xsq); SoC Samsung Exynos s5e8865 (ro.board.platform erd8865). SSH key-only u0_a414@192.168.1.8:8022.
       Termux, aarch64. $HOME: 224G, 50G used, 173G free. Termux pkgs: git, python only (no llama-cpp, no rsync).
       Two physical A57s on the LAN (distinct boot_id, same build fingerprint).
+        2026-10-10: host key SHA256:r7Bm/uv3...fXc; anchor SmolLM2 Q4_0 ngl99 fa on = pp128 1476, tg64 100; sustained 5 min ~-12%; keep f16 KV.
     gpus:
       - vendor: samsung
         model: Samsung Xclipse 550   # vulkaninfo deviceName, INTEGRATED_GPU
