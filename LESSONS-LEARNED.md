@@ -78,3 +78,27 @@ LFM2.5-1.2B Q4_K_M: -t 2 pp 50.7 / tg 17.1; -t 3 47.4 / 15.2; -t 4 49.3 / 14.2.
 - The cutoff is 2.4, not 2.0. NumPy 2.0-2.3 used an SSE3 baseline: **numpy 2.3.5 imports and passes all familia tests on qodesh (91 passed, 19 skipped).**
 - `scripts/cpu_level.py` detects the level (`/proc/cpuinfo` flags, CPUID on Windows, sysctl on macOS). Non-x86 reports n/a. All three installers pick the numpy spec from the level alone: v0/v1 get `numpy<2.4`, everything else gets `numpy`. There are no OS-, host- or GPU-specific pins.
 - numpy 2.4+ can still be built for v1: the docs say `-Csetup-args=-Dcpu-baseline=none` gives a build "compatible with all x86 CPUs" and relies on runtime dispatch, though pre-2009 SIMD paths are no longer maintained. Not built yet, because qodesh has no C compiler (no MSVC, gcc, clang or MSYS2).
+
+## L-miryam-igpu. On miryam the iGPU loses to the CPU, even when it fits in RAM (2026-10-10)
+The guard killed any run that dropped free RAM below 3.5 GiB. "delta" is how much free RAM fell during the run. Idle MemAvailable was only 3.7-4.2 GiB (desktop, Grok Bot app, other workers), so the room was 200-700 MiB.
+
+| config | prompt t/s | generate t/s | RSS MiB | delta MiB | under 3.5 GiB? |
+|---|---|---|---|---|---|
+| SmolLM2-135M, CPU, -t 2 | 340 | **110** | 253 | 55 | no |
+| SmolLM2-135M, iGPU, -lm mmap, ub 128 | 331 | 51 | 194 | 136 | no |
+| SmolLM2-135M, iGPU, -lm none, ub 128 | 332 | 50 | 116 | 144 | no |
+| embeddinggemma-2 Q8, CPU, -t 2 | 195 | - | 741 | 360 | no |
+| embeddinggemma-2 Q8, iGPU (4 variants) | - | - | 209-504 | 362-545 | 3 of 4 killed |
+| LFM2.5-1.2B, iGPU or partial offload, -lm none, q4_0 KV, ub 128 | - | - | 111 | 644-900 | killed |
+| LFM2.5-1.2B or Qwen3.5-2B, CPU alone | - | - | 1283 / 1604 | 258-533 | killed |
+| CPU model + SmolLM2 on the iGPU (both combos) | - | - | - | 107-199 | killed (3.54-3.58 GiB) |
+| Qwen3.5-2B, CPU, -t 2, server, no speculation | - | 8.7 | - | - | ran unguarded, min 3.48 GiB |
+| same, `--spec-type ngram-mod` | - | 16.3 | - | - | ran unguarded, min 3.43 GiB |
+| same, `--spec-type ngram-simple` | - | **17.4** | - | - | ran unguarded, min 3.44 GiB |
+
+- **`-lm none` (no mmap) and the iGPU:** with no mmap, process RSS drops (116 vs 194 MiB for SmolLM2), but the free-RAM delta is the same. The driver's copy replaces the page-cache copy and doesn't add to it. A smaller ubatch saves about 40 MiB.
+- **Speed:** the HD 620 is about half the CPU's decode speed even on a 135M model. That's consistent with decode being memory-bound on the shared DDR4 and 15 W budget, though nothing measured bandwidth or power directly. Every iGPU role tested was slower than the same work on the CPU, and none of them fit the coder within the 3.5 GiB target. The useful roles left are background prompt or embedding work with a tiny model while the CPU is otherwise idle.
+- **Clock cap:** gt_max_freq_mhz isn't writable without root, so a capped clock wasn't testable.
+- **Speculation:** n-gram lookup costs no weights and no measurable RAM. It doubled decode on a copy-heavy prompt, which is the best case. `coder-ngram` in graph.yaml is now `ngram-simple` and stays `planned` until it's measured on real hermes edits. The three server runs above had no 3.5 GiB guard. Their lowest free RAM (3.43-3.48 GiB) cleared the 3 GiB floor but fell just short of the 3.5 GiB target.
+- **Draft-model speculation:** Qwen3.5-0.8B as a draft would cost about 530 MiB more, which breaks the floor. Not run.
+
