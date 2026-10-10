@@ -116,6 +116,8 @@ llama-bench -m SmolLM2-135M-Instruct-Q4_K_M.gguf -ngl 99
 Measured: SmolLM2-135M 66â€“79 tok/s on Vulkan vs ~30 on the CPU. Record `llama-server --version`
 with every result; two "identical" phones had different Termux llama-cpp versions (L9).
 
+Termux add-ons (Termux:API, Termux:Boot, ...) must be signed with the same key as Termux itself. Our phones run Termux from the latest GitHub build, so Termux:API must come from https://github.com/termux/termux-api/releases (not F-Droid, not Play). The `termux-api` pkg alone is not enough: `termux-battery-status` hangs without the app. Power readings without it use readable `/sys/class/power_supply/*` files only.
+
 ## 6. Registry: reuse measurements instead of re-tuning
 
 ```sh

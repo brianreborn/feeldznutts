@@ -1,5 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/sh
 # familia one-click installer: Android via Termux (F-Droid or GitHub build, not Play Store).
+# Add-ons must match Termux's signing key: with Termux from GitHub releases, get Termux:API from
+#   https://github.com/termux/termux-api/releases (the termux-api pkg alone is not enough; termux-battery-status hangs).
 #   curl -fsSL https://raw.githubusercontent.com/brianreborn/familia/main/install/termux/install.sh | sh
 # Runtime comes from Termux's own `llama-cpp` package (pkg verifies package
 # signatures/hashes), so no unverified binary is downloaded here.

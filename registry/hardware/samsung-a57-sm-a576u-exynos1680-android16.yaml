@@ -36,3 +36,5 @@ power:
   inference_w: {value: null, measured: false, estimate_w: 5.0, method: "assumed SoC sustained load for a mid-range 4 nm phone under GPU compute; not from a spec sheet", hook: "termux-battery-status current/voltage, or /sys/class/power_supply/battery/{current_now,voltage_now}"}
 records: {hardware_profile: samsung-a57-sm-a576u-exynos1680-android16}
 # 2026-10-10 phone8: thermal zones unreadable from Termux; sustained tg drifts ~-12% after ~4 min; termux-battery-status needs the Termux:API app.
+# Termux on these phones is the latest GitHub build; add-ons must share its signature, so Termux:API comes from
+#   https://github.com/termux/termux-api/releases (not F-Droid). Without it, power comes from readable /sys/class/power_supply/* only.

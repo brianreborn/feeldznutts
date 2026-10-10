@@ -1,0 +1,21 @@
+== listing
+ls: cannot open directory '/sys/class/power_supply/': Permission denied
+-- before 1791673571
+cat: /proc/loadavg: Permission denied
+== dumpsys
+./p8.sh: line 7: dumpsys: command not found
+-- during1 1791673579
+cat: /proc/loadavg: Permission denied
+-- during2 1791673587
+cat: /proc/loadavg: Permission denied
+-- during3 1791673595
+cat: /proc/loadavg: Permission denied
+-- during4 1791673603
+cat: /proc/loadavg: Permission denied
+-- during5 1791673612
+cat: /proc/loadavg: Permission denied
+-- during6 1791673620
+cat: /proc/loadavg: Permission denied
+-- after 1791673625
+cat: /proc/loadavg: Permission denied
+DONE
