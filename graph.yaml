@@ -439,7 +439,7 @@ speculative:
   # Pencilled in. Draft is loaded inside the target's llama-server (-md).
   coder-ngram:
     experimental: true
-    status: planned
+    status: active               # miryam real-edit test 2026-10-10: 2.2x decode (8.3 -> 18.2 t/s)
     mode: ngram
     target: coder
     spec_type: ngram-simple      # model-free lookup decoding; no extra weights. miryam 2026-10-10, -t 2, repeat-code
