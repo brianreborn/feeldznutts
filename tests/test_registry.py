@@ -29,8 +29,9 @@ def test_append_only():
 def test_suggest_miryam_decision_prefers_cpu_and_penalises_igpu():
     ranked = R.suggest("miryam", "decision", R.load())
     assert ranked[0]["backend"] == "cpu"
-    ig = [c for c in ranked if c["backend"] == "vulkan"][0]
-    assert ig["contention_factor"] < 0.5
+    ig = [c for c in ranked if c["backend"] == "vulkan"]
+    # alone-only iGPU records (e.g. SmolLM2 2026-10-10) have no contention data -> factor 1.0
+    assert min(c["contention_factor"] for c in ig) < 0.5
     assert ranked[0]["watts_label"].startswith("estimate")
 
 def test_suggest_phone_vulkan_and_snippet():

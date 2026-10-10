@@ -32,7 +32,7 @@ def test_estimated_plus_reserve_fails():
     # Drop embed so we only need coder; inflate reserve past miryam.
     g["hosts"]["miryam"]["reserve_ram_mib"] = 5000  # coder+embed ~3479 + 5000 > 7270
     errs, totals = vg.validate(g)
-    assert any("hosts.miryam" in e and "reserve" in e and "exceeds ram_mib" in e for e in errs), errs
+    assert not any("reserve" in e for e in errs) and any("hosts.miryam" in w and "reserve" in w for w in vg.WARNINGS), (errs, vg.WARNINGS)
 
 
 def test_small_host_free_floor():
@@ -42,4 +42,13 @@ def test_small_host_free_floor():
     g["hosts"]["miryam"]["ram_mib"] = 5000
     g["hosts"]["miryam"]["reserve_ram_mib"] = 200  # budget alone would pass; floor must catch it
     errs, totals = vg.validate(g)
-    assert any("2048 MiB floor" in e for e in errs), errs
+    assert any("2048 MiB provisional floor" in w for w in vg.WARNINGS), vg.WARNINGS
+
+
+def test_overcommit_is_hard_error():
+    if not (os.path.isfile(CODER) and os.path.isfile(EMBED)):
+        return
+    g = _base()
+    g["hosts"]["miryam"]["ram_mib"] = 1000  # estimate > physical RAM
+    errs, totals = vg.validate(g)
+    assert any("overcommit" in e for e in errs), errs

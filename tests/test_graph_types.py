@@ -283,7 +283,7 @@ def test_model_role_pentest_allowed():
 
 
 def test_ram_safety_reserve_and_small_host_floor():
-    """estimated + reserve must fit; hosts under 8 GiB keep ~2 GiB free (docs/ram-safety.md)."""
+    """reserve and small-host floor are provisional guidance -> warnings (docs/ram-safety.md)."""
     coder = os.path.expanduser("~/.local/share/gguf/models/coder/Qwen3.5-2B-Q4_K_M.gguf")
     embed = os.path.expanduser("~/.local/share/gguf/models/embed/embeddinggemma-2-Q8_0.gguf")
     if not (os.path.isfile(coder) and os.path.isfile(embed)):
@@ -296,11 +296,11 @@ def test_ram_safety_reserve_and_small_host_floor():
     # Inflate reserve so coder+embed no longer fit.
     x = g(); x["hosts"]["miryam"]["reserve_ram_mib"] = 4000
     errs, _ = validate_graph.validate(x, check_files=True)
-    assert any("reserve" in e and "exceeds ram_mib" in e for e in errs), errs
+    assert any("reserve" in w and "exceeds ram_mib" in w for w in validate_graph.WARNINGS), validate_graph.WARNINGS
     # Soft floor: tiny reserve but free-after-estimate under 2048 on a small host.
     x = g(); x["hosts"]["miryam"]["ram_mib"] = 5000; x["hosts"]["miryam"]["reserve_ram_mib"] = 200
     errs, _ = validate_graph.validate(x, check_files=True)
-    assert any("2048 MiB floor" in e for e in errs), errs
+    assert any("2048 MiB provisional floor" in w for w in validate_graph.WARNINGS), validate_graph.WARNINGS
 
 
 

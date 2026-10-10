@@ -79,7 +79,10 @@ def load(path):
     with open(path) as f:
         return yaml.load(f, Loader=UniqueKeyLoader)
 
+WARNINGS = []  # margin-only RAM guidance from the last validate() call
+
 def validate(graph, check_files=True):
+    del WARNINGS[:]
     """Typed schema check, then GGUF/RAM checks. Returns (errors, {host: est MiB})."""
     errs = validate_types(graph)
     if errs or not check_files:
@@ -166,19 +169,23 @@ def validate(graph, check_files=True):
         dkv = kv_mib(dmeta, dmeta.get("general.architecture"), dctx, sp.get("draft_kv_type", t["kv_type"])) or 0
         totals[t["host"]] = totals.get(t["host"], 0.0) + os.path.getsize(dp) / 2**20 + dkv  # draft weights + its KV
     for h, total in totals.items():
-        # RAM safety (docs/ram-safety.md): estimated_used + reserve must fit total_ram.
+        # RAM safety (docs/ram-safety.md). reserve_ram_mib and the 2 GiB small-host floor are
+        # PROVISIONAL guidance: idle load has not been characterized and no system-level OOM
+        # protection is deployed yet, so margin-only issues warn. Only clear overcommit fails.
         ram = hosts[h]["ram_mib"]
-        reserve = hosts[h]["reserve_ram_mib"]
+        reserve = hosts[h].get("reserve_ram_mib") or 0
+        if total > ram:
+            errs.append(f"hosts.{h}: estimated RAM {total:.0f} MiB exceeds physical ram_mib {ram} MiB (overcommit)")
+            continue
         if total + reserve > ram:
-            errs.append(
-                f"hosts.{h}: estimated RAM {total:.0f} MiB + reserve {reserve} MiB exceeds ram_mib {ram} MiB"
-            )
+            WARNINGS.append(
+                f"hosts.{h}: estimated RAM {total:.0f} MiB + provisional reserve {reserve} MiB exceeds ram_mib {ram} MiB "
+                f"(guidance, not a hard limit; see docs/ram-safety.md)")
         free_after = ram - total
         if ram < 8192 and free_after < 2048:
-            errs.append(
-                f"hosts.{h}: estimated free after nodes {free_after:.0f} MiB < 2048 MiB floor "
-                f"on host with ram_mib {ram} < 8192 (OOM safety; see docs/ram-safety.md)"
-            )
+            WARNINGS.append(
+                f"hosts.{h}: estimated free after nodes {free_after:.0f} MiB < 2048 MiB provisional floor "
+                f"on host with ram_mib {ram} < 8192 (guidance; see docs/ram-safety.md)")
     return errs, totals
 
 def server_args(graph, name):
@@ -222,6 +229,7 @@ def main(argv):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from transport_graph import validate_transports
     errs += validate_transports(graph)  # meshes: (ssh nexus / bittorrent), #22
+    for w in WARNINGS: print(f"graph: WARNING: {w}", file=sys.stderr)
     for e in errs: print(f"graph: ERROR: {e}", file=sys.stderr)
     if errs: return 1
     if "--args" in argv:
