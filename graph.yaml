@@ -351,6 +351,8 @@ nodes:
     port: 18101
     cache_ram_mib: 256
     status: planned
+    escalates_to: [coder, qodesh-resident]   # docs/escalation.md: fastest measured first (miryam coder 17.4 t/s vs 0.91 here)
+    escalation: {mode: suggest}              # coder crosses host: needs first-time consent
 
   miryam-gpu-decision:
     model: smollm2-135m-q4-miryam
@@ -365,6 +367,8 @@ nodes:
     port: 18111
     cache_ram_mib: 64
     status: planned
+    escalates_to: [coder]                    # same host; docs/escalation.md
+    escalation: {mode: suggest}
 
   phone7-decision:
     model: smollm2-135m-q4-phone    # Q4_0 fastest tg on Xclipse 550 (102 vs 83 Q4_K_M vs 89 Q8_0 t/s, phone8 2026-10-10)

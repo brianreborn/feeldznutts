@@ -183,6 +183,8 @@ def check_node(g, name, n, errs):
     if m is not None and s is not None and isinstance(m.get("trained_ctx"), int) and s > m["trained_ctx"]:
         errs.append(f"nodes.{name}: per-slot ctx {s} exceeds model trained_ctx {m['trained_ctx']} (no inflation)")
     check_offload(name, n, h, r, errs)
+    from escalation import check_node_escalation  # docs/escalation.md
+    check_node_escalation(g, name, n, errs)
     for other, o in (g.get("nodes") or {}).items():
         if other < name and "planned" not in (o.get("status"), n.get("status")) and o.get("host") == n.get("host") and o.get("port") == n.get("port"):
             errs.append(f"nodes.{name}: port {n.get('port')} on host {n.get('host')!r} also used by node {other!r}")
@@ -457,7 +459,9 @@ TYPES = {
                 "offload": req("any"), "bind": req("str"), "port": req("int", min=1),
                 "cache_ram_mib": req("int", min=0), "status": req("enum", choices={"active", "planned"}),
                 "embeddings": opt("bool"), "threads": opt("int", min=1), "scale_down": opt("any"),
-                "selection": opt("enum", choices={"default", "fallback"}), "note": opt("str")}, check_node, doc="model instance on host+runtime"),
+                "selection": opt("enum", choices={"default", "fallback"}), "note": opt("str"),
+                # heavyweight escalation (docs/escalation.md); checked in escalation.check_node_escalation
+                "escalates_to": opt("list"), "escalation": opt("any")}, check_node, doc="model instance on host+runtime"),
     "speculative": T({"experimental": req("bool"), "status": req("enum", choices={"planned", "experimental", "active"}),
                       "mode": req("enum", choices={"draft", "ngram"}), "target": req("ref", ref="nodes"),
                       "spec_type": opt("enum", choices=SPEC_TYPES), "draft": opt("ref", ref="models"),

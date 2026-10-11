@@ -153,3 +153,11 @@ Multi-member transports live in `meshes:` (`type: ssh` nexus hub or `type: bitto
 - Runtime kind `sm11-legacy`; model role `decision` for always-active draft/decision paths.
 - Validator skips GGUF checks for `.bin` / `sm11-legacy` checkpoints.
 
+
+## Escalation fields (nodes, optional)
+
+- `escalates_to: [node, ...]` ordered heavyweight fallback list; targets must exist,
+  no self/duplicate targets, no cycles. Targets on another host are allowed and
+  surface as `crosses_host: true` (first-time consent required before auto).
+- `escalation: {mode: off|suggest|auto, triggers: {...}}`; default mode `suggest`.
+  See docs/escalation.md.
