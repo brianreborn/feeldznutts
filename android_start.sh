@@ -1,27 +1,21 @@
 #!/usr/bin/env bash
-# Script to start the Android node for the swarm.
-# Requires sshpass installed and the SSH password for the Android device.
+# Start the Android node on one phone. Target comes from graph.yaml (#18):
+#   ./android_start.sh phone7
+# Env overrides: ANDROID_HOST, ANDROID_USER, ANDROID_PORT. Key-only SSH; no passwords.
+set -euo pipefail
+cd "$(dirname "$0")"
+read -r HOST USER PORT < <(python3 scripts/android_target.py "${1:-}")
+SSH=(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -p "$PORT" "$USER@$HOST")
 
-# Ensure sshpass is available
-if ! command -v sshpass >/dev/null 2>&1; then
-  echo "sshpass not found, installing..."
-  sudo apt-get update && sudo apt-get install -y sshpass
-fi
-
-# Retrieve password from environment variable or prompt
-if [ -z "$ANDROID_SSH_PASSWORD" ]; then
-  read -s -p "Enter SSH password for Android (u0_a439@192.168.1.6): " ANDROID_SSH_PASSWORD
-  echo
-fi
-
-# Launch the remote start script on the Android device
-sshpass -p "$ANDROID_SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p 8022 u0_a439@192.168.1.6 "\
+"${SSH[@]}" "\
   cd /data/local/tmp && \
+  if [ ! -x ./start-green-roomz.sh ]; then echo 'start-green-roomz.sh not deployed to /data/local/tmp' >&2; exit 1; fi && \
   ./start-green-roomz.sh && \
-  echo 'Android node started'\"
+  echo 'Android node started'"
 
-# Register the node with the fleet using the existing with-fleet.sh helper
-# Assuming with-fleet.sh is in the repo root
+# with-fleet.sh and scripts/pentest-role.json are not shipped yet (#15); fail loudly.
+for f in ./with-fleet.sh scripts/pentest-role.json; do
+  [ -e "$f" ] || { echo "android_start.sh: missing $f; fleet registration skipped (see #15)" >&2; exit 1; }
+done
 ./with-fleet.sh --role pentest --manifest scripts/pentest-role.json
-
 echo "Android pentest node launched and registered."
