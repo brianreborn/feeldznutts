@@ -140,3 +140,6 @@ the best escalation target when a faster copy exists elsewhere (miryam coder,
 17.4 t/s). Rank targets from measured registry speeds, not declaration order,
 send a compact handoff instead of full history, and never auto-open a
 cross-host edge without recorded consent (docs/escalation.md).
+
+## HANDOFF — 2026-10-10
+Credits cut mid-sprint. Public resume index: [`docs/HANDOFF.md`](docs/HANDOFF.md) (issues #39–#48, label `handoff-2026-10-10`). Offline commands: [`docs/offline-test-plan.md`](docs/offline-test-plan.md). Private transcript/ops: `brianreborn/familia-private` `logs/2026-10-10-familia-sprint.md` + `HANDOFF.md`.
