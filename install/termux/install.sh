@@ -105,6 +105,8 @@ elif [ "$DRY" = 1 ] && command -v curl >/dev/null 2>&1; then
   if [ -n "$MTMP" ] && mkdir -p "$MTMP/scripts" && curl -fsSL "$RAW_URL/$BRANCH/scripts/host_measure.py" -o "$MTMP/scripts/host_measure.py" \
      && curl -fsSL "$RAW_URL/$BRANCH/graph.yaml" -o "$MTMP/graph.yaml"; then MREPO="$MTMP"
   else MREPO=""; say "warning: could not fetch host_measure.py from $BRANCH"; fi
+NPSPEC=numpy; [ -n "$MREPO" ] && [ -f "$MREPO/scripts/cpu_level.py" ] && NPSPEC=$(python "$MREPO/scripts/cpu_level.py" --numpy-spec 2>/dev/null || echo numpy)
+python -c 'import numpy' 2>/dev/null || run pip install --quiet "$NPSPEC" || say "note: numpy not installed (optional; pkg install python-numpy)"
 else MREPO=""; fi
 if [ -n "$MREPO" ]; then
   MF=""; [ "$DRY" = 1 ] && MF=--dry-run

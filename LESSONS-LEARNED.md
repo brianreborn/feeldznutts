@@ -72,3 +72,9 @@ LFM2.5-1.2B Q4_K_M: -t 2 pp 50.7 / tg 17.1; -t 3 47.4 / 15.2; -t 4 49.3 / 14.2.
 - **iGPU and RAM:** every Vulkan run of the 2B coder (op-offload with -ngl 0, or -ngl 99) dropped MemAvailable from about 3.2 to 2.2-2.6 GiB. That tripped the 3 GiB guard within seconds, so the runs were killed before they produced numbers. On a shared-memory iGPU the driver allocates its own buffers in addition to the mmapped weights. Under the 3 GiB-free rule, the coder can't use the iGPU on miryam at all. Smaller models (LFM, embed) are tested for iGPU roles separately.
 - **iGPU clock cap:** gt_max_freq_mhz (1000 MHz, min 300) isn't writable without root, and intel_gpu_top isn't installed, so a capped iGPU clock wasn't tested.
 
+
+## numpy and pre-x86-64-v2 CPUs (qodesh, Athlon II X2), 2026-10-10
+- numpy 2.4+ wheels crashed on import with 0xc000001d (illegal instruction). NumPy 2.4.0 raised the default x86 `cpu-baseline` to X86_V2 (SSE3, SSSE3, SSE4.1, SSE4.2, POPCNT, CX16, LAHF; see https://numpy.org/doc/stable/release/2.4.0-notes.html). The Athlon II X2 (K10) has SSE3, POPCNT and LAHF, but no SSSE3 and no SSE4.1/4.2, so it is v1.
+- The cutoff is 2.4, not 2.0. NumPy 2.0-2.3 used an SSE3 baseline: **numpy 2.3.5 imports and passes all familia tests on qodesh (91 passed, 19 skipped).**
+- `scripts/cpu_level.py` detects the level (`/proc/cpuinfo` flags, CPUID on Windows, sysctl on macOS). Non-x86 reports n/a. All three installers pick the numpy spec from the level alone: v0/v1 get `numpy<2.4`, everything else gets `numpy`. There are no OS-, host- or GPU-specific pins.
+- numpy 2.4+ can still be built for v1: the docs say `-Csetup-args=-Dcpu-baseline=none` gives a build "compatible with all x86 CPUs" and relies on runtime dispatch, though pre-2009 SIMD paths are no longer maintained. Not built yet, because qodesh has no C compiler (no MSVC, gcc, clang or MSYS2).

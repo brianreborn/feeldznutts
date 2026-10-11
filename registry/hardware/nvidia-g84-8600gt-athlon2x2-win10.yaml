@@ -26,3 +26,8 @@ power:
   measured: false
   note: "nvidia-smi does not support G84 under driver 341.x; GPU power is unmeasured. Wall-meter is the only cheap measurement."
 records: {hardware_profile: nvidia-g84-8600gt-athlon2x2-win10}
+cpu_isa:
+  x86_64_level: v1
+  measured_by: scripts/cpu_level.py (CPUID on Windows)
+  missing_for_v2: [ssse3, sse4_1, sse4_2]
+  numpy: {spec: 'numpy<2.4', verified: '2.3.5 imports, familia tests pass', crashes: 'numpy>=2.4 wheels (X86_V2 baseline), 0xc000001d', source_build_note: 'numpy>=2.4 needs -Dcpu-baseline=none from source; not built yet (no compiler on host)'}

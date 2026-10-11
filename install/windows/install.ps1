@@ -172,6 +172,12 @@ if (Test-Path $graph) {
     if ($LASTEXITCODE -eq 0) { & python (Join-Path $repo 'scripts\validate_graph.py') --no-files $graph; if ($LASTEXITCODE) { Say 'warning: graph validation reported problems' } }
     else { Say 'PyYAML missing: graph validation skipped (pip install pyyaml)' }
   } else { Say 'python not found: graph validation skipped' }
+  if ($py) {
+    # numpy (LittleBit runtime): spec depends only on the x86-64 level (scripts\cpu_level.py)
+    $np = (& python (Join-Path $repo 'scripts\cpu_level.py') --numpy-spec 2>$null); if (-not $np) { $np = 'numpy' }
+    & python -c 'import numpy' 2>$null
+    if ($LASTEXITCODE -and $PSCmdlet.ShouldProcess('python', "pip install --user $np")) { & python -m pip install --user --quiet --no-warn-script-location $np; if ($LASTEXITCODE) { Say "note: numpy not installed (optional; pip install --user $np)" } }
+  }
 } else { Say "graph.yaml not present yet (dry-run?): would measure into $graph" }
 
 # 4. optional per-user logon task (no admin) via the existing #17 script
