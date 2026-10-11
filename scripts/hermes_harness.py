@@ -10,6 +10,8 @@
 3. Starts the node's llama-server from `validate_graph.py --args` if it is not
    up, and waits until /props reports the expected n_ctx.
 4. Execs /snap/bin/hermes-agent with that HERMES_HOME.
+--escalate [--light NODE] puts a localhost escalation proxy (scripts/escalation_proxy.py,
+docs/escalation.md) between hermes and the node; hermes then runs as a child, not exec.
 --selftest-compaction runs hermes' own ContextCompressor on a synthetic
 transcript against the node and checks that facts survive the summary.
 """
@@ -69,9 +71,9 @@ def bind(n):
     return n.get("bind") or n.get("host", "127.0.0.1")
 
 
-def render(g, agent, user_cfg_path=os.path.join(USER_HOME, "config.yaml")):
+def render(g, agent, user_cfg_path=os.path.join(USER_HOME, "config.yaml"), base_override=None):
     a, name, n, alias = node_for(g, agent)
-    base = f"http://{bind(n)}:{n['port']}/v1"
+    base = base_override or f"http://{bind(n)}:{n['port']}/v1"
     user = {}
     if os.path.isfile(user_cfg_path):
         user = yaml.safe_load(open(user_cfg_path)) or {}
@@ -192,15 +194,34 @@ def selftest(g, agent):
     print("selftest: PASS")
 
 
+def run_escalating(g, agent, light, swap_back, rest):
+    import socket, escalation_proxy as EP, registry
+    local = socket.gethostname().split(".")[0]
+    if local not in g["hosts"]: local = g["nodes"][light]["host"]
+    def ensure(nm):
+        try: ensure_server(g, nm, g["nodes"][nm]); return True
+        except SystemExit as e: print(f"hermes.sh: {e}", file=sys.stderr); return False
+    ensure(light) or die(f"light node {light} did not start")
+    esc = EP.Escalator(g, light, registry.load(), local, ensure=ensure, swap_back=swap_back)
+    srv = EP.serve(esc)
+    base = f"http://127.0.0.1:{srv.server_address[1]}/v1"
+    home, _, _, _ = render(g, agent, base_override=base)
+    print(f"hermes.sh: escalation proxy {base} light={light} targets={g['nodes'][light].get('escalates_to')}", file=sys.stderr)
+    return subprocess.call([HERMES_BIN] + rest, env=dict(os.environ, HERMES_HOME=home))
+
+
 def main(argv):
     agent, graph_path, rest = "hermes", os.path.join(ROOT, "graph.yaml"), []
-    mode = "run"
+    mode, light, swap_back = "run", None, True
     it = iter(argv)
     for x in it:
         if x == "--agent": agent = next(it)
         elif x == "--graph": graph_path = next(it)
         elif x == "--render-only": mode = "render"
         elif x == "--selftest-compaction": mode = "selftest"
+        elif x == "--escalate": mode = "escalate"
+        elif x == "--light": light = next(it)
+        elif x == "--no-swap-back": swap_back = False
         elif x == "--": rest = list(it); break
         else: rest.append(x)
     g = load_graph(graph_path)
@@ -210,6 +231,8 @@ def main(argv):
     print(f"hermes.sh: HERMES_HOME={home} model={base}", file=sys.stderr)
     if mode == "render":
         return 0
+    if mode == "escalate":
+        return run_escalating(g, agent, light or name, swap_back, rest)
     ensure_server(g, name, n)
     os.environ["HERMES_HOME"] = home
     os.execv(HERMES_BIN, [HERMES_BIN] + rest)

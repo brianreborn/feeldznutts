@@ -53,9 +53,29 @@ python scripts/escalate.py consent --node qodesh-smol-cpu --target coder
 python scripts/escalate.py handoff --signals s.json
 ```
 
-## Hook point (not wired yet)
+## hermes integration (implemented, behind a flag)
 
-The router (green-roomz route node / hermes harness) should, after each light
-reply, build the signals dict, call `decide`, show `prompt` on `suggest`, and on
-yes/auto send `handoff(...)` to the target alias, then return to `swap_back_to`.
-This wiring into green-roomz is still TODO; the CLI is the integration surface.
+`scripts/hermes.sh --escalate [--light NODE] [--no-swap-back] -- <hermes args>`
+starts `scripts/escalation_proxy.py` on 127.0.0.1 (random port), renders the
+hermes config to point at it, and runs hermes as a child.
+
+- Signals come from the traffic: assistant replies (repeat detection), `tool`
+  messages since the last user turn matching error/traceback/failed/exit code N,
+  the last user message (phrases), elapsed time, upstream errors.
+- `suggest`: prompt printed to stderr, appended to the reply hermes shows, and
+  written to `.cache/familia/escalation-pending.json`. Accept with
+  `python3 scripts/escalate.py accept` (applies on the next request; a first yes
+  to a cross-host target records consent). `FAMILIA_ESCALATE=auto` accepts
+  same-host suggestions automatically.
+- `auto` (or accepted): local target started via `validate_graph.py` args
+  (`ensure_server`), next request goes to the target alias with the compact
+  handoff (tools stripped), then the proxy swaps back after one clean reply.
+
+## Remaining / stubbed
+
+- Cross-host targets bound to 127.0.0.1 (all current nodes, e.g. miryam `coder`)
+  are reported unreachable: an ssh tunnel (nexus) is not opened automatically.
+- "Clean reply" = HTTP 200; no check that the heavy model actually solved it.
+- Task tags are not collected from hermes; elapsed time resets only on swap back.
+- Not yet run live against hermes-agent; tested with mock llama-servers only.
+- green-roomz route node is not wired; the CLI/proxy is the integration surface.
