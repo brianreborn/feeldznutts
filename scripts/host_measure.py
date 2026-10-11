@@ -23,6 +23,17 @@ def _meminfo_mib():
             return int(subprocess.check_output(["sysctl", "-n", "hw.memsize"])) // 1048576
         except Exception:
             pass
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            class _MS(ctypes.Structure):
+                _fields_ = [("len", ctypes.c_ulong), ("load", ctypes.c_ulong)] + [
+                    (n, ctypes.c_ulonglong) for n in ("tot", "avail", "tpf", "apf", "tv", "av", "aev")]
+            m = _MS(); m.len = ctypes.sizeof(_MS)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m)):
+                return m.tot // 1048576
+        except Exception:
+            pass
     return None
 
 def _cpu():
@@ -45,7 +56,7 @@ def _cpu():
 def _os():
     if os.environ.get("TERMUX_VERSION") or os.path.isdir("/data/data/com.termux"):
         return "android"
-    return {"darwin": "macos"}.get(sys.platform, "linux" if sys.platform.startswith("linux") else sys.platform)
+    return {"darwin": "macos", "win32": "windows"}.get(sys.platform, "linux" if sys.platform.startswith("linux") else sys.platform)
 
 def _flags():
     try:

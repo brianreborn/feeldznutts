@@ -155,3 +155,11 @@ From [docs/ram-safety.md](docs/ram-safety.md); the validator enforces the first 
   (shared memory bus and power budget); prompt-processing and embedding use of the iGPU is still being measured.
 - The phone parameter sweep (quants, KV type, flash attention, threads, batch) has not finished yet.
 - More: [docs/known-issues.md](docs/known-issues.md).
+
+## Windows prerequisites
+
+- **bash:** use Git for Windows' bash, not WSL's `C:\Windows\System32\bash.exe`. Put `C:\Program Files\Git\bin` and `C:\Program Files\Git\usr\bin` on your user PATH.
+- **Python 3.12** from python.org, with `set PYTHONUTF8=1`. The bash tests call `python3`, so either disable the Microsoft Store "App execution aliases" for python3, or add a shim named `python3` that runs `exec python "$@"`.
+- **numpy:** `pip install --user "numpy<2"` on CPUs older than x86-64-v2 (for example the Phenom/Athlon on qodesh). numpy 2.x crashes there with 0xc000001d (illegal instruction).
+- **pytest:** `python -m pytest -q tests`. Expected: 85 passed, 19 skipped.
+- **bash tests:** `test_nexus_localhost.sh` is Linux-only because it needs sudo/useradd. `test_bt_loopback.sh` needs `aria2c`. `test_with_fleet.sh` needs the graph's model files to be present.
