@@ -171,6 +171,12 @@ def check_node(g, name, n, errs):
     if r is not None and m is not None and not planned and m.get("arch") not in (r.get("supported_archs") or []):
         errs.append(f"nodes.{name}: model {n['model']!r} arch {m.get('arch')!r} not in runtime {n['runtime']!r} "
                     f"(build {r.get('build')}) supported_archs {r.get('supported_archs')}; upgrade the runtime pin, do not drop the model")
+    if r is not None and m is not None:
+        mq, rq = m.get("quant"), r.get("quants")
+        if mq and mq not in (rq or []):
+            errs.append(f"nodes.{name}: runtime {n['runtime']!r} does not declare quants: [{mq}]; llama.cpp cannot load LittleBit files")
+        elif not mq and rq:
+            errs.append(f"nodes.{name}: runtime {n['runtime']!r} only serves quants {rq}; model {n['model']!r} declares no quant")
     if isinstance(n.get("ctx"), int) and isinstance(n.get("parallel"), int) and n["parallel"] > 0 and n["ctx"] % n["parallel"]:
         errs.append(f"nodes.{name}: ctx {n['ctx']} not divisible by parallel {n['parallel']}")
     s = slot_ctx(n)
@@ -437,12 +443,14 @@ TYPES = {
                  "hub": opt("str"), "root": opt("str"), "identity": opt("str"), "host_key_policy": opt("str"),
                  "tracker": opt("str"), "bind": opt("str"), "port": opt("int", min=1), "private": opt("bool"),
                  "client": opt("str")}, doc="multi-member transport (ssh nexus / bittorrent swarm)"),
-    "runtimes": T({"kind": req("enum", choices={"llama-server", "drex-dlm", "sm11-legacy"}), "build": req("str"), "commit": req("str"),
+    "runtimes": T({"kind": req("enum", choices={"llama-server", "drex-dlm", "sm11-legacy", "reference"}), "build": req("str"), "commit": req("str"),
                    "hosts": req("refs", ref="hosts"), "supported_archs": req("list"),
-                   "backends": req("list"), "spec_types": req("strlist"), "bin": opt("str")}, check_runtime, doc="inference engine build"),
+                   "backends": req("list"), "spec_types": req("strlist"), "bin": opt("str"),
+                   "quants": opt("strlist")}, check_runtime, doc="inference engine build"),
     "models": T({"gguf": req("str"), "sha256": req("sha"), "arch": req("str"), "trained_ctx": req("int", min=1),
                  "role": req("enum", choices={"chat", "coder", "decision", "reasoning", "embed", "vision", "diffusion", "pentest"}),
-                 "derived_from": opt("any")}, doc="weights file"),  # derived_from: written by scripts/scale_down.py
+                 "derived_from": opt("any"),
+                 "quant": opt("enum", choices={"littlebit"})}, doc="weights file"),  # derived_from: written by scripts/scale_down.py
     "nodes": T({"model": req("ref", ref="models"), "host": req("ref", ref="hosts"), "runtime": req("ref", ref="runtimes"),
                 "ctx": req("int", min=1), "parallel": req("int", min=1),
                 "kv_type": req("enum", choices={"f16", "bf16", "q8_0", "q4_0", "f32"}), "flash_attn": req("bool"),

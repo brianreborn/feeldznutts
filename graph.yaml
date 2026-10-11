@@ -245,7 +245,29 @@ runtimes:
     spec_types: []
     bin: E:/temp/llama-cpu/llama-server.exe
 
+  lbref:
+    # familia LittleBit reference runtime (numpy, docs/littlebit.md). Correctness only:
+    # kind: reference has no HTTP server, so validate_graph.py --args refuses it.
+    kind: reference
+    build: scripts/littlebit/lbref.py (familia, numpy)
+    commit: lbref-v1
+    bin: scripts/littlebit/lbref.py
+    hosts: [miryam, qodesh]
+    supported_archs: [llama]
+    backends: [cpu]
+    spec_types: []
+    quants: [littlebit]          # the only runtime that may load .lbit.gguf files
+
 models:
+  # LittleBit example (opt-in; produced by scale_down.py --method littlebit, docs/littlebit.md):
+  # tiny-lb:
+  #   gguf: ~/.local/share/gguf/models/tiny/stories15M-lb1.0.lbit.gguf
+  #   sha256: unmeasured
+  #   arch: llama
+  #   trained_ctx: 256
+  #   role: decision
+  #   quant: littlebit           # must match the file's familia.quant marker (validator checks both ways)
+  # ...served by a node with runtime: lbref
 
   stories15m-fp32:
     gguf: 'E:/temp/gpu-legacy/stories15M.bin'   # llama2.c checkpoint (not GGUF)

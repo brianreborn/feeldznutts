@@ -111,6 +111,11 @@ def validate(graph, check_files=True):
         except Exception as e: errs.append(f"nodes.{name}: cannot read GGUF: {e}"); continue
         arch = meta.get("general.architecture")
         if arch != m["arch"]: errs.append(f"models.{n['model']}: GGUF architecture is {arch!r}, graph says {m['arch']!r}")
+        fq, mq = meta.get("familia.quant"), m.get("quant")  # LittleBit (docs/littlebit.md)
+        if fq == "littlebit" and mq != "littlebit": errs.append(f"models.{n['model']}: model is a LittleBit file (familia.quant=littlebit); model must declare quant: littlebit")
+        if mq == "littlebit" and fq != "littlebit": errs.append(f"models.{n['model']}: quant: littlebit but {path} has no familia.quant=littlebit marker")
+        if mq == "littlebit" and fq == "littlebit" and meta.get("littlebit.format_version") != 1:
+            errs.append(f"models.{n['model']}: unsupported littlebit.format_version {meta.get('littlebit.format_version')!r} (this validator knows 1)")
         df = m.get("derived_from")
         if df:  # produced by scripts/scale_down.py (docs/scale-down.md)
             w = f"models.{n['model']}.derived_from"
@@ -178,6 +183,9 @@ def validate(graph, check_files=True):
 
 def server_args(graph, name):
     n = graph["nodes"][name]
+    kind = (graph["runtimes"].get(n["runtime"]) or {}).get("kind", "llama-server")
+    if kind != "llama-server":
+        raise SystemExit(f"graph: ERROR: runtime kind {kind!r} is not a llama-server; it has no server args (LittleBit has no serving runtime yet)")
     m = graph["models"][n["model"]]
     a = ["-m", os.path.expanduser(m["gguf"]), "--host", n["bind"], "--port", str(n["port"]),
          "-c", str(n["ctx"]), "-np", str(n["parallel"]), "-ctk", n["kv_type"], "-ctv", n["kv_type"],
