@@ -68,9 +68,9 @@ class ScaleDown(unittest.TestCase):
         r = run("scripts/validate_graph.py", "--graph", os.path.join(self.d, "graph.scaled.yaml"))
         self.assertNotEqual(r.returncode, 0); self.assertIn("differs from scale-down manifest", r.stderr)
 
-    def test_littlebit_tbd(self):
+    def test_littlebit_needs_runtime(self):
         sd = {"enabled": True, "backend": "littlebit", "output": os.path.join(self.d, "lb.gguf")}
-        r = run("scripts/scale_down.py", "--graph", self.write(sd)); self.assertIn("TBD", r.stderr)
+        r = run("scripts/scale_down.py", "--graph", self.write(sd)); self.assertIn("needs 'runtime'", r.stderr)
 
     @unittest.skipUnless(PUB["sha256"], "set FAMILIA_TEST_PUB_SHA256 to run the network test")
     def test_published(self):

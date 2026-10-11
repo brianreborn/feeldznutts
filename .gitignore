@@ -10,3 +10,13 @@ __pycache__/
 /:
 graph.scaled.yaml
 *.gguf.part
+
+# build outputs / scratch (never commit)
+gpu-legacy/out/
+gpu-legacy/*.log
+*.exe
+*.obj
+*.o
+*.cubin
+*.gguf
+*.safetensors
