@@ -102,6 +102,10 @@ def test_planned_node_skips_placement():
     assert BASE["nodes"]["qodesh-resident"]["status"] == "planned" and errs(g()) == []
     x = g(); x["nodes"]["qodesh-resident"]["status"] = "active"; has(x, "not installed on host 'qodesh'")
 
+def test_node_selection_fallback():
+    assert BASE["nodes"]["qodesh-resident"]["selection"] == "fallback" and errs(g()) == []
+    x = g(); x["nodes"]["qodesh-resident"]["selection"] = "maybe"; has(x, "maybe")
+
 def spec_draft(**kw):
     d = {"experimental": True, "status": "planned", "mode": "draft", "target": "coder", "draft": "egemma2-q8",
          "draft_max": 8, "draft_min": 1, "p_min": 0.75}

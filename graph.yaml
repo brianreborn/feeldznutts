@@ -435,6 +435,8 @@ nodes:
     bind: 127.0.0.1
     port: 9941
     cache_ram_mib: 0
+    selection: fallback          # user-selectable; SmolLM2 stays qodesh default (Brian 2026-10-10)
+    note: "probably slower; fallback. Unmeasured on qodesh (model file not present there yet)."
 
 speculative:
   # Pencilled in. Draft is loaded inside the target's llama-server (-md).

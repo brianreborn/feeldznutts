@@ -24,7 +24,7 @@ graph TD
   transport["transports: kind local|ssh|nfs|rsync|bittorrent|zfs, from, to"]
   runtime["runtimes: kind llama-server|drex-dlm, build, commit, bin, hosts, supported_archs, backends, spec_types"]
   model["models: gguf, sha256, arch, trained_ctx, role chat|coder|reasoning|embed|vision|diffusion|pentest"]
-  node["nodes: model, host, runtime, ctx, parallel, kv_type, flash_attn, offload {backend, ngl, split, main_gpu}, bind, port, cache_ram_mib, status active|planned, embeddings"]
+  node["nodes: model, host, runtime, ctx, parallel, kv_type, flash_attn, offload {backend, ngl, split, main_gpu}, bind, port, cache_ram_mib, status active|planned, embeddings, selection default|fallback, note"]
   spec["speculative (pencilled in): status planned|experimental|active, mode draft|ngram, target, draft, draft_max, draft_min, p_min, spec_type"]:::exp
   gateway["gateways: kind green-roomz, host, port"]
   alias["aliases: node (exactly one), gateway"]
@@ -129,7 +129,7 @@ promote an experimental type, set `experimental=False`, drop its
 | phone7 | android 16 (Galaxy A57, 192.168.1.7) | Samsung Xclipse 550, shared RAM, Vulkan 1.4.304 (driver 25.4.7) | vulkan (OpenCL blocked) | tbd | yes |
 | phone8 | android 16 (Galaxy A57, 192.168.1.8) | Samsung Xclipse 550, shared RAM, Vulkan 1.4.304 (driver 25.4.7) | vulkan (OpenCL blocked) | tbd | yes |
 
-qodesh is worth having for its 16 GB of RAM: it can hold bigger CPU-only models than miryam, at about 3 tok/s (green-roomz #4). `nodes.qodesh-resident` is pencilled in with `status: planned` until a Windows llama.cpp build is declared in `runtimes` and its `windows.startup` method is picked.
+qodesh is worth having for its 16 GB of RAM: it can hold bigger CPU-only models than miryam, at about 3 tok/s (green-roomz #4). `nodes.qodesh-resident` is a user-selectable fallback (`selection: fallback`, probably slower than the SmolLM2 default, unmeasured on qodesh) and stays `status: planned` until a Windows llama.cpp build is declared in `runtimes` and its `windows.startup` method is picked.
 
 ## Pentest (authorized fleet testing)
 
