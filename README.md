@@ -38,7 +38,7 @@ Already have a checkout?
 ./start.sh
 ```
 
-**Windows:** familia doesn't ship a top-level Windows installer yet ([#17](https://github.com/brianreborn/familia/issues/17)). The model server sub-project, [code-bootstraps-llama.cpp](https://github.com/brianreborn/code-bootstraps-llama.cpp), has its own PowerShell 5.1 installer, which is documented as not yet re-tested.
+**Windows:** run `install\windows\install.bat` (wraps `install\windows\install.ps1`), then `scripts\windows\start.bat`. See [docs/windows.md](docs/windows.md).
 
 ---
 
@@ -114,19 +114,20 @@ Shell environment variables always take precedence over saved settings.
 
 ## Implementation status
 
-What is on [`fix/config-graph`](https://github.com/brianreborn/familia/tree/fix/config-graph) (the base of this docs branch) versus what lives only on unmerged feature branches. Nothing here is on `main` until those branches merge.
+Everything below is on `main` (all feature branches have been merged; nothing is pending on side branches).
 
-| Feature | Where | Status |
-|---|---|---|
-| Declarative graph `graph.yaml` (schema v1) + `scripts/validate_graph.py` | fix/config-graph | Implemented; validator checks runtimes, GGUF arch, agent `context_length`, prompt-cache size, RAM |
-| hermes harness `scripts/hermes.sh` / `hermes_harness.py` | fix/config-graph | Implemented; compaction self-test (`--selftest-compaction`) not yet completed on miryam |
-| Side-by-side llama.cpp runtimes (b11374 coder, b11539 embed) | fix/config-graph | Implemented |
-| RAM safety reserve (`reserve_ram_mib: 3072` on miryam, ~2 GiB free floor on hosts < 8 GiB) | fix/config-graph | Implemented — see [docs/ram-safety.md](docs/ram-safety.md) |
-| Android script fixes (#14, #15, #18), repo rename (#16), Windows doc cleanup (#17) | fix/config-graph | Implemented, not merged |
-| Typed graph schema v2: multi-host, GPU fields, speculative edges, qodesh host, `pentests` type (launch-test only) | [feat/graph-types](https://github.com/brianreborn/familia/tree/feat/graph-types) | Unmerged |
-| Transports PoC: SSH nexus, private BitTorrent tracker | [feat/transport-poc](https://github.com/brianreborn/familia/tree/feat/transport-poc) | Unmerged proof of concept (loopback-tested) |
-| `scripts/scale_down.py` (published GGUF / `llama-quantize`; LittleBit TBD) | [feat/scale-down](https://github.com/brianreborn/familia/tree/feat/scale-down) | Unmerged |
-| `isolated_remote` compute design | [feat/isolated-compute](https://github.com/brianreborn/familia/tree/feat/isolated-compute) | Design doc only |
+| Feature | Status |
+|---|---|
+| Declarative graph `graph.yaml` (typed schema v2, multi-host, GPU fields, speculative edges, `pentests` launch-test-only type) + `scripts/validate_graph.py` | Implemented; fails loud on runtime, GGUF arch, `context_length`, prompt-cache size and RAM violations |
+| hermes harness `scripts/hermes.sh` / `hermes_harness.py` | Implemented; compaction self-test (`--selftest-compaction`) not yet completed on miryam |
+| Side-by-side pinned llama.cpp runtimes | Implemented |
+| RAM safety reserve (`reserve_ram_mib`, memcap scope in `scripts/serve.sh`, earlyoom+zram on miryam) | Implemented, see [docs/ram-safety.md](docs/ram-safety.md) |
+| Measured model/hardware registry (`registry/records.jsonl`, `scripts/registry.py`) | Implemented, see [docs/model-registry.md](docs/model-registry.md) |
+| One-click installers (Windows, desktop Linux/macOS, Termux) + Windows startup | Implemented, see [docs/install.md](docs/install.md), [docs/windows.md](docs/windows.md) |
+| Legacy GPU decision node (GeForce 8600 GT, sm_11 PTX) | Measured; tuning notes in [docs/perf/pgo-followup.md](docs/perf/pgo-followup.md) |
+| Transports PoC (SSH nexus, private BitTorrent tracker), C2C stage 1 `kv_ship` | Opt-in proof of concept (loopback- and cross-host-tested) |
+| `scripts/scale_down.py`, LittleBit reference runtime | Implemented (LittleBit is correctness-only) |
+| `isolated_remote` compute | Design doc only |
 
 ---
 
@@ -137,7 +138,7 @@ What is on [`fix/config-graph`](https://github.com/brianreborn/familia/tree/fix/
 | Linux x86_64 | Tested |
 | Termux (Android) | Server runs; detach and wake lock handled by `start.sh`. Android fleet-node scripts are being fixed ([#14](https://github.com/brianreborn/familia/issues/14), [#15](https://github.com/brianreborn/familia/issues/15), [#18](https://github.com/brianreborn/familia/issues/18)) |
 | macOS | Expected to work through the POSIX installer; untested |
-| Windows | No top-level installer yet ([#17](https://github.com/brianreborn/familia/issues/17)) |
+| Windows | One-click installer `install\windows\install.bat` + `scripts\windows\start.bat`; measured on qodesh (Windows 10, non-AVX Athlon II X2) |
 
 ---
 

@@ -341,6 +341,7 @@ nodes:
     host: qodesh
     runtime: llama-b11540-win-cpu
     ctx: 2048
+    threads: 1                   # measured 2026-10-10: 1 thread pinned CPU0 + GPU node on CPU1 = ~30 tok/s combined; -t 2 starves the GPU feeder
     parallel: 1
     kv_type: q8_0
     flash_attn: false
