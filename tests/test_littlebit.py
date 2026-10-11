@@ -95,14 +95,18 @@ class LittleBit(unittest.TestCase):
         model = {"gguf": dense, "sha256": "unmeasured", "arch": "llama", "trained_ctx": 32, "role": "decision"}
         if quant: model["quant"] = quant
         g = {"version": 2,
-             "hosts": {"h": {"kind": "desktop", "measured": True, "ram_mib": 1 << 20, "reserve_ram_mib": 0, "gpus": []}},
+             "hosts": {"h": {"kind": "desktop", "measured": True, "os": "linux", "cpu": "test", "threads": 4,
+                            "ram_mib": 1 << 20, "reserve_ram_mib": 0, "gpus": []}},
              "runtimes": {"lbref": {"kind": "reference", "build": "lbref", "commit": "lbref-v1", "bin": LBREF, "hosts": ["h"],
                                     "supported_archs": ["llama"], "backends": ["cpu"], "spec_types": [], "quants": ["littlebit"]}},
              "models": {"t": model},
              "nodes": {"t": {"model": "t", "host": "h", "runtime": "lbref", "ctx": 32, "parallel": 1, "kv_type": "f16",
-                             "flash_attn": False, "offload": {"ngl": 0}, "bind": "127.0.0.1", "port": 19980,
+                             "flash_attn": False, "offload": {"backend": "cpu", "ngl": 0, "split": "none", "main_gpu": 0}, "bind": "127.0.0.1", "port": 19980,
                              "cache_ram_mib": 1, "status": "active"}},
-             "gateways": {}, "aliases": {}, "agents": {}}
+             "gateways": {"gw": {"kind": "green-roomz", "host": "h", "port": 19981}},
+             "aliases": {"t": {"node": "t", "gateway": "gw"}},
+             "agents": {"a": {"kind": "hermes-agent", "host": "h", "min_ctx": 32, "context_length": 32,
+                              "aliases": {"main": "t", "auxiliary": "t"}}}}
         p = os.path.join(self.d, "graph.yaml"); yaml.safe_dump(g, open(p, "w")); return p, ck
 
     def test_scale_down_from_checkpoint_and_validate(self):
@@ -118,7 +122,7 @@ class LittleBit(unittest.TestCase):
         r = run("scripts/validate_graph.py", "--graph", sg, "--args", "t-sd")
         self.assertNotEqual(r.returncode, 0); self.assertIn("not a llama-server", r.stderr + r.stdout)
         g["models"]["t-sd"].pop("quant"); yaml.safe_dump(g, open(sg, "w"))
-        r = run("scripts/validate_graph.py", "--graph", sg); self.assertIn("must declare quant: littlebit", r.stderr)
+        r = run("scripts/validate_graph.py", "--graph", sg); self.assertRegex(r.stderr, "must declare quant: littlebit|declares no quant")
         g["models"]["t-sd"]["quant"] = "littlebit"; g["runtimes"]["lbref"]["quants"] = []; yaml.safe_dump(g, open(sg, "w"))
         r = run("scripts/validate_graph.py", "--graph", sg); self.assertIn("does not declare quants", r.stderr)
 

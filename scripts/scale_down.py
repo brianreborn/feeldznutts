@@ -202,7 +202,10 @@ def main(argv):
         else:
             dn, d = derived_node(n, v, rec)
             new["nodes"][dn] = d
-        if "--replace" in argv: new["nodes"].pop(n)  # serve only the scaled copy; original file untouched
+        if "--replace" in argv:  # serve only the scaled copy; original file untouched
+            new["nodes"].pop(n)
+            for x in (new.get("aliases") or {}).values():
+                if x.get("node") == n: x["node"] = dn
         print(f"scale_down: {n} -> {dn}: {rec['output_bytes']/2**20:.1f} MiB (from {(rec['source_bytes'] or 0)/2**20:.1f} MiB) sha256 {rec['output_sha256'][:12]}")
     for v in new["nodes"].values(): v.pop("scale_down", None)
     yaml.safe_dump(new, open(outg, "w"), sort_keys=False)
