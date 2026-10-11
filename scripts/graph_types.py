@@ -448,7 +448,7 @@ TYPES = {
                 "kv_type": req("enum", choices={"f16", "bf16", "q8_0", "q4_0", "f32"}), "flash_attn": req("bool"),
                 "offload": req("any"), "bind": req("str"), "port": req("int", min=1),
                 "cache_ram_mib": req("int", min=0), "status": req("enum", choices={"active", "planned"}),
-                "embeddings": opt("bool"), "scale_down": opt("any")}, check_node, doc="model instance on host+runtime"),
+                "embeddings": opt("bool"), "threads": opt("int", min=1), "scale_down": opt("any")}, check_node, doc="model instance on host+runtime"),
     "speculative": T({"experimental": req("bool"), "status": req("enum", choices={"planned", "experimental", "active"}),
                       "mode": req("enum", choices={"draft", "ngram"}), "target": req("ref", ref="nodes"),
                       "spec_type": opt("enum", choices=SPEC_TYPES), "draft": opt("ref", ref="models"),

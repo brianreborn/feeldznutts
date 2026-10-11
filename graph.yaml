@@ -351,7 +351,8 @@ nodes:
     parallel: 1
     kv_type: q8_0
     flash_attn: true
-    offload: {backend: cpu, ngl: 0, split: none, main_gpu: 0}
+    offload: {backend: cpu, ngl: 0, split: none, main_gpu: 0}   # iGPU measured worse + needs extra RAM (LESSONS L-miryam-perf)
+    threads: 2                   # 2 physical cores: tg 8.4 t/s vs 6.3 at -t 4 (2026-10-10 llama-bench)
     bind: 127.0.0.1
     port: 9941
     cache_ram_mib: 1024          # >= per-slot prompt state (validator checks)
