@@ -99,8 +99,8 @@ def test_reported_only_unmeasured():
     x = g(); x["hosts"]["godslove"]["reported"] = {"ram_mib": 1}; has(x, "with a 'source'")
 
 def test_planned_node_skips_placement():
-    assert BASE["nodes"]["qodesh-resident"]["status"] == "planned" and errs(g()) == []
-    x = g(); x["nodes"]["qodesh-resident"]["status"] = "active"; has(x, "not installed on host 'qodesh'")
+    x = g(); n = x["nodes"]["qodesh-resident"]; n["status"] = "planned"; n["runtime"] = "llama-b11374"; assert errs(x) == []
+    n["status"] = "active"; has(x, "not installed on host 'qodesh'")
 
 def test_node_selection_fallback():
     assert BASE["nodes"]["qodesh-resident"]["selection"] == "fallback" and errs(g()) == []

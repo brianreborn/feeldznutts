@@ -206,6 +206,7 @@ runtimes:
     backends: [cpu, vulkan]
     spec_types: [draft-simple, ngram-simple, ngram-map-k, ngram-map-k4v, ngram-mod, ngram-cache]
 
+
   sm11-legacy-qodesh:
     kind: sm11-legacy
     build: "gpu-legacy run_sm11 + kernels.ptx (CUDA driver API, sm_11)"
@@ -241,7 +242,7 @@ runtimes:
     build: b11540 win-cpu-x64
     commit: 1e6f04a75
     hosts: [qodesh]
-    supported_archs: [llama, qwen2, gemma2, gemma3]
+    supported_archs: [llama, qwen2, gemma2, gemma3, qwen35]  # qwen35 verified by llama-bench 2026-10-10
     backends: [cpu]
     spec_types: []
     bin: E:/temp/llama-cpu/llama-server.exe
@@ -309,7 +310,7 @@ models:
     role: decision
   qwen35-2b-q4km:
     gguf: ~/.local/share/gguf/models/coder/Qwen3.5-2B-Q4_K_M.gguf
-    sha256: unmeasured           # fill in from `sha256sum` on miryam
+    sha256: aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223  # qodesh copy (scp from miryam)
     arch: qwen35                 # must match GGUF general.architecture
     trained_ctx: 262144          # must match GGUF qwen35.context_length (checked)
     role: coder
@@ -423,20 +424,21 @@ nodes:
   qodesh-resident:
     # Pencilled in: green-roomz's resident 0.5B chat path on qodesh (#18).
     # Planned nodes are schema-checked only; no placement, file or RAM checks.
-    status: planned
+    status: active
     model: qwen35-2b-q4km        # placeholder until a 0.5B model entry exists
     host: qodesh
-    runtime: llama-b11374        # placeholder: a Windows CPU build must be declared first
-    ctx: 4096
+    runtime: llama-b11540-win-cpu
+    ctx: 2048
     parallel: 1
     kv_type: q8_0
     flash_attn: false
     offload: {backend: cpu, ngl: 0, split: none, main_gpu: 0}
     bind: 127.0.0.1
     port: 9941
-    cache_ram_mib: 0
+    cache_ram_mib: 64
+    threads: 2
     selection: fallback          # user-selectable; SmolLM2 stays qodesh default (Brian 2026-10-10)
-    note: "probably slower; fallback. Unmeasured on qodesh (model file not present there yet)."
+    note: "slower fallback: measured 0.91 tg / 1.44 pp t/s at -t 2 (0.69/1.06 at -t 1), coarse; use threads 2"
 
 speculative:
   # Pencilled in. Draft is loaded inside the target's llama-server (-md).
