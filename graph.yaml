@@ -215,13 +215,13 @@ runtimes:
     spec_types: []
     bin: gpu-legacy/out/run_sm11.exe
 
-  termux-llama-cpp-0.5.0:
+  termux-llama-cpp-0.6.0:
     kind: llama-server           # from the Termux package; pinned by package version (no upstream sha)
     build: Termux llama-cpp 0.5.0 + llama-cpp-backend-vulkan (pkg)
-    commit: pkg:llama-cpp=0.5.0  # `llama-server --version`: 0.5.0 (build 0, commit unknown); pin is the pkg version
+    commit: pkg:llama-cpp=0.6.0  # `llama-server --version`: 0.5.0 (build 0, commit unknown); pin is the pkg version
     bin: llama-server            # on PATH in Termux; familia-start sets LD_LIBRARY_PATH for system libvulkan
-    hosts: [phone7]
-    supported_archs: [llama]     # SmolLM2 verified 2026-10-10
+    hosts: [phone7, phone8]      # phone8 on 0.6.0; phone7 had 0.5.0 (match before comparing)
+    supported_archs: [llama, qwen2]   # SmolLM2 + Qwen2.5-0.5B verified 2026-10-10
     backends: [cpu, vulkan]
     spec_types: []
 
@@ -284,10 +284,22 @@ models:
     role: decision
   smollm2-135m-q4-miryam:
     gguf: ~/models/SmolLM2-135M-Instruct-Q4_0.gguf
-    sha256: unmeasured           # miryam went offline before sha256sum; fill in
+    sha256: bcc3af2849ad6095af57e9b5cd43775256efdc66e306acb529172f92d0c04b03   # measured on miryam 2026-10-10; same file on phone8
     arch: llama
     trained_ctx: 8192
     role: decision
+  smollm2-135m-q4-phone:
+    gguf: ~/familia/models/SmolLM2-135M-Instruct-Q4_0.gguf   # phones; bartowski/SmolLM2-135M-Instruct-GGUF
+    sha256: bcc3af2849ad6095af57e9b5cd43775256efdc66e306acb529172f92d0c04b03
+    arch: llama
+    trained_ctx: 8192
+    role: decision
+  qwen25-05b-q4km-phone:
+    gguf: ~/familia/models/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf  # bartowski/Qwen2.5-0.5B-Instruct-GGUF
+    sha256: 6eb923e7d26e9cea28811e1a8e852009b21242fb157b26149d3b188f3a8c8653
+    arch: qwen2
+    trained_ctx: 32768
+    role: chat
   smollm2-135m-q4km:
     gguf: ~/familia/models/SmolLM2-135M-Instruct-Q4_K_M.gguf   # on phone7 (bartowski/SmolLM2-135M-Instruct-GGUF)
     sha256: 2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d
@@ -352,18 +364,32 @@ nodes:
     status: planned
 
   phone7-decision:
-    model: smollm2-135m-q4km
+    model: smollm2-135m-q4-phone    # Q4_0 fastest tg on Xclipse 550 (102 vs 83 Q4_K_M vs 89 Q8_0 t/s, phone8 2026-10-10)
     host: phone7
-    runtime: termux-llama-cpp-0.5.0
+    runtime: termux-llama-cpp-0.6.0
     ctx: 2048
     parallel: 1
     kv_type: q8_0
-    flash_attn: false
+    flash_attn: true             # pp128 1372 vs 1239 t/s, tg equal (phone8)
     offload: {backend: vulkan, ngl: 99, split: none, main_gpu: 0}   # Xclipse 550, verified
     bind: 127.0.0.1
     port: 18110
     cache_ram_mib: 64            # tiny; phone7 reserve_ram_mib 5120 leaves ~2.3 GiB
     status: planned              # launch via familia-start once the node is wired into the fleet
+
+  phone8-general:
+    model: qwen25-05b-q4km-phone
+    host: phone8
+    runtime: termux-llama-cpp-0.6.0
+    ctx: 2048
+    parallel: 1
+    kv_type: f16
+    flash_attn: true
+    offload: {backend: vulkan, ngl: 99, split: none, main_gpu: 0}   # tg64 33.9 / tg128 30.8, pp128 508 t/s; CPU ngl 0 unusable (0.3 t/s)
+    bind: 127.0.0.1
+    port: 18112
+    cache_ram_mib: 128           # min MemAvailable 1945 MiB during the run; reserve 5120
+    status: planned
   coder:
     status: active
     model: qwen35-2b-q4km

@@ -338,10 +338,10 @@ def test_smollm2_catalog_and_measured_notes():
 
 
 def test_runtime_pkg_pin_and_phone7_vulkan():
-    x = g(); assert x["runtimes"]["termux-llama-cpp-0.5.0"]["commit"] == "pkg:llama-cpp=0.5.0"
+    x = g(); assert x["runtimes"]["termux-llama-cpp-0.6.0"]["commit"] == "pkg:llama-cpp=0.6.0"
     assert x["hosts"]["phone7"]["gpus"][0]["backend_status"] == "verified"
     assert x["hosts"]["phone8"]["gpus"][0]["backend_status"] == "verified"
     assert x["hosts"]["miryam"]["gpus"][0]["backend_status"] == "verified" and x["nodes"]["miryam-gpu-decision"]["status"] == "planned"
     assert x["nodes"]["phone7-decision"]["status"] == "planned"
-    x = g(); x["runtimes"]["termux-llama-cpp-0.5.0"]["commit"] = "main"; has(x, "is not a git sha")
-    x = g(); x["runtimes"]["termux-llama-cpp-0.5.0"]["commit"] = "pkg:llama-cpp"; has(x, "is not a git sha")
+    x = g(); x["runtimes"]["termux-llama-cpp-0.6.0"]["commit"] = "main"; has(x, "is not a git sha")
+    x = g(); x["runtimes"]["termux-llama-cpp-0.6.0"]["commit"] = "pkg:llama-cpp"; has(x, "is not a git sha")
