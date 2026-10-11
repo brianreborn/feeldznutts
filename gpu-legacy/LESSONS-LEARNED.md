@@ -195,3 +195,18 @@ Sweep: RG {2,4,8,16} x BG {1,2,3,6} x G {8,16,32}, 20 iterations per config. Reg
 | Q8 classifier through the texture cache, 4 rows/thread (29.9 to 13.8 ms) | 14.6 |
 | per-shape rows tuned on the rotating cold bench | 14.8 |
 | **per-shape tuned on the real-sequence replay (256-thread CTAs, 5 rows/thread)** | **15.3-16.9** |
+
+## 2026-10-10 CPU coder tuning alongside the GPU decision node (llama-bench b11540, SmolLM2-135M Q4_0 on CPU as the coder proxy since no larger coder model is on qodesh; -p 64 -n 32, 1 rep)
+| coder config | alone pp64 / tg32 | with GPU node serving (pinned CPU1) pp64 / tg32 |
+|---|---|---|
+| **-t 1 -C 0x1 --cpu-strict 1** | 17.35 / 13.61 | **16.89 / 13.44** |
+| -t 1 (unpinned) | 17.38 / 12.82 | 16.92 / 13.22 |
+| -t 2 | 28.19 / 24.69 | 18.93 / 12.57 |
+| -t 2 -C 0x3 --cpu-strict 1 | 31.27 / 24.85 | **6.28 / 0.28** (collapses) |
+| -t 1 pinned --poll 0 | 16.73 / 13.29 | 15.28 / 12.03 |
+| -t 1 pinned, KV q8_0 + flash-attn | 17.73 / 13.99 | 15.32 / 12.97 |
+| -t 1 pinned -ub 64 | 17.37 / 13.71 | 16.56 / 13.35 |
+- The GPU node stayed at 15.6-16.9 tok/s (serve, inflight 2) through the whole matrix, with dips to about 15.6-15.9 during the 2-thread coder runs.
+- Best combined: **coder -t 1 pinned to CPU0, strict, plus the GPU node on CPU1: about 13.4 + 16.8 = 30 tok/s**. -t 2 unpinned gives about 12.6 + 15.7 = 28. -t 2 strict-pinned starves the GPU feeder thread and the coder collapses (it spins on a core that the GPU worker owns). With the GPU node idle, -t 2 -C 0x3 is best for the coder (24.9 tg). Poll 0 and q8 KV don't help at this size, and ubatch doesn't matter for tg.
+- Replay of the remaining knobs (attention/RoPE share, Q8 classifier tile sizes) ran while qodesh was under desktop load and VRAM was down to the Q4-classifier fallback. Its numbers are inconsistent (removing kernels made the token *slower*), so I adopted nothing from it. Kept the code: the SMOL_KB_REPLAY share probe and the Q8 classifier tile tuner with dry-run register checks.
+- The fused QKV+RoPE kernel is not attempted yet. It needs a clean attention/RoPE share measurement first (an earlier per-launch estimate was well under 1 ms of the ~60 ms token).
