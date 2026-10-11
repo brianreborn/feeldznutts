@@ -119,7 +119,7 @@ def ensure_server(g, name, n, timeout=900):
         logd = os.path.expanduser("~/.cache/familia/logs"); os.makedirs(logd, exist_ok=True)
         log = open(os.path.join(logd, f"{name}.log"), "ab")
         print(f"hermes.sh: starting node {name}: {' '.join(args)}", file=sys.stderr)
-        subprocess.Popen(args, stdout=log, stderr=log, stdin=subprocess.DEVNULL, start_new_session=True)
+        subprocess.Popen(args, stdout=log, stderr=log, stdin=subprocess.DEVNULL, start_new_session=True, env=vg.server_env(g, name))
         t0 = time.time()
         while (p := props(n)) is None or "default_generation_settings" not in p:
             if time.time() - t0 > timeout: die(f"node {name} did not come up on port {n['port']}")

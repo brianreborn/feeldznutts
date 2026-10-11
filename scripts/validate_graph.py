@@ -188,6 +188,15 @@ def validate(graph, check_files=True):
                 f"on host with ram_mib {ram} < 8192 (guidance; see docs/ram-safety.md)")
     return errs, totals
 
+# Vulkan llama.cpp builds allocate ~1.83 GB of Vulkan host buffers in shmem even with -ngl 0
+# (miryam, b11374), which counts against the memcap scope and stalls the server. With no GPU
+# layers, hide the Vulkan devices. An explicit GGML_VK_VISIBLE_DEVICES in env wins.
+def server_env(graph, name, env=None):
+    env = dict(os.environ if env is None else env)
+    if graph["nodes"][name]["offload"]["ngl"] == 0 and "GGML_VK_VISIBLE_DEVICES" not in env:
+        env["GGML_VK_VISIBLE_DEVICES"] = ""
+    return env
+
 def server_args(graph, name):
     n = graph["nodes"][name]
     kind = (graph["runtimes"].get(n["runtime"]) or {}).get("kind", "llama-server")

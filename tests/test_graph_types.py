@@ -349,3 +349,12 @@ def test_runtime_pkg_pin_and_phone7_vulkan():
     assert x["nodes"]["phone7-decision"]["status"] == "planned"
     x = g(); x["runtimes"]["termux-llama-cpp-0.6.0"]["commit"] = "main"; has(x, "is not a git sha")
     x = g(); x["runtimes"]["termux-llama-cpp-0.6.0"]["commit"] = "pkg:llama-cpp"; has(x, "is not a git sha")
+
+
+def test_server_env_hides_vulkan_when_cpu_only():
+    x = g()
+    name = next(k for k, n in x["nodes"].items() if n["offload"]["ngl"] == 0)
+    assert validate_graph.server_env(x, name, {})["GGML_VK_VISIBLE_DEVICES"] == ""
+    assert validate_graph.server_env(x, name, {"GGML_VK_VISIBLE_DEVICES": "1"})["GGML_VK_VISIBLE_DEVICES"] == "1"
+    x["nodes"][name]["offload"]["ngl"] = 5
+    assert "GGML_VK_VISIBLE_DEVICES" not in validate_graph.server_env(x, name, {})

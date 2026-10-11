@@ -11,6 +11,11 @@ args="$(python3 "$here/scripts/validate_graph.py" --graph "$here/graph.yaml" --a
 if [ -z "${FAMILIA_MEMCAP:-}" ]; then
   case "$(hostname)" in miryam*) FAMILIA_MEMCAP=1 ;; *) FAMILIA_MEMCAP=0 ;; esac
 fi
+# Vulkan builds allocate ~1.83 GB of host buffers in shmem even with -ngl 0, counted
+# against the memcap scope (LESSONS-LEARNED L-vkshm). With no GPU layers, hide Vulkan unless set.
+case " $args " in *" -ngl 0 "*)
+  [ -n "${GGML_VK_VISIBLE_DEVICES+set}" ] || export GGML_VK_VISIBLE_DEVICES= ;;
+esac
 # shellcheck disable=SC2086
 if [ "$FAMILIA_MEMCAP" = 1 ] && command -v systemd-run >/dev/null 2>&1; then
   exec systemd-run --user --scope --quiet --unit="familia-$node-$$" \

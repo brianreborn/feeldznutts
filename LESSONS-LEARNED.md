@@ -127,3 +127,8 @@ A provisional guard killed any run that dropped free RAM below 3.5 GiB. That 3.5
 - When a phone pings but doesn't answer on port 8022, Termux sshd isn't running (seen on 192.168.1.7 at 16:20 PT). Run `sshd` in Termux. You can't start it remotely.
 - Without the Termux:API app, nothing about power can be read on the A57 (Android 16): /sys/class/power_supply, /proc/loadavg and dumpsys are all denied. Install the app from github.com/termux/termux-api/releases, because add-ons must share GitHub Termux's signature.
 
+
+## L-vkshm. Vulkan builds bloat shmem even with -ngl 0 (2026-10-10)
+- On miryam, llama-server from llama-b11374-linux-x64-vulkan with `-ngl 0` still allocated about 1.83 GB of Vulkan host buffers in shared memory. Shmem counts against the familia memcap scope (MemoryHigh 2200M / MemoryMax 2600M), so the coder hit memory.high 31,678 times, PSI full was about 48%, and it stalled until it was killed.
+- Restarting with `GGML_VK_VISIBLE_DEVICES=` (empty) fixed it: 0 memory.high events, about 1.18 GB used, about 3.0 GiB free.
+- Fix: `scripts/serve.sh`, `hermes_harness.py` (via `validate_graph.server_env`) and code-bootstraps `scripts/serve.sh` export `GGML_VK_VISIBLE_DEVICES=` when the node's ngl is 0, unless it's already set. Windows `serve.ps1` is unchanged: PowerShell 5.1 can't hold an empty env var.
