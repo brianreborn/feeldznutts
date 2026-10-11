@@ -8,7 +8,7 @@ Your models and data stay on your machines. A file, context, or result moves acr
 
 familia is a **topology coordinator**. It doesn't replace your inference server or your agents. It pins them, checks them out side by side, and wires them into one graph you control: llama.cpp model servers, the green-roomz alias gateway, the green-agentz fleet, and agents such as hermes-agent, across the machines you own.
 
-> **Status:** pre-release (`<VERSION>`). Linux is the tested platform. See [Platform status](#platform-status) and [Known issues](docs/known-issues.md).
+> **Status:** pre-release (`v0.1.0-rc1`). Linux is the tested platform. **Want to help test? Start with [TESTING.md](TESTING.md).** See [Platform status](#platform-status) and [Known issues](docs/known-issues.md).
 
 ---
 
