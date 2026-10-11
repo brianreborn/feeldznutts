@@ -36,6 +36,21 @@ On miryam the HD 620 runs SmolLM2-135M at 46 t/s tg, versus 101 on 2 CPU threads
 ## L11. Measure once, look it up afterwards (model + hardware registry)
 Each tuning round re-learned facts we already had: the A57 Vulkan loader fix, the iGPU being slower than miryam's CPU, contention on shared memory. Every measured result now goes into `registry/records.jsonl` (append-only, labelled measured or estimated), and the hardware setup facts go into shareable `registry/hardware/` profiles. `registry.py suggest` proposes a placement from those records instead of a new sweep, and `match` gives identical hardware the known-good setup. Watts are spec-sheet upper bounds until measured. See `docs/model-registry.md`.
 
+## L12. LittleBit sub-1-bit models (#28, 2026-10-09)
+- **QAT is not optional.** Upstream init alone (Dual-SVID, even with LittleBit-2 ITQ) on stories15M gives PPL 2.6e5–2.7e14 vs dense 1.88 (0% top-1). Per-layer relative output error at eff 1.0: 0.82 SVD-only, 0.68 ITQ. 300 CPU self-distillation steps (~6 min, 4 threads) bring it to PPL 6.31 (eff 1.0) and 6.98 (eff 0.1). Those numbers are a pipeline exercise on same-distribution text, not paper-grade.
+- **At small widths the scales dominate.** eff 0.1 on 288-wide layers clamps to rank 8 and stores 0.224 bpw, because the F32 scales outweigh the signs. On K2-Horizon-0.9B-sized layers 0.1 really is ~0.11 bpw.
+- **The dense parts decide the size.** After LittleBit, the embedding and an untied head are most of the file (stories15M: 71 of 71.3 MiB; K2-Horizon: 2×188 MiB f16 vs 11.6 MiB of linears). Plan the head's quant and placement first.
+- **Keep upstream's bit layout** (int32, LSB first, bit 1 = −1). Conversion is then word copies, and the q/k rope permute only moves whole packed rows plus u1.
+- **License:** upstream is CC BY-NC 4.0, so familia imports a user-supplied checkout and vendors nothing.
+- **No public sub-1-bit checkpoints** from Samsung. "littlebit-qwen3-4b" GGUFs on HF are ordinary Q4/Q5/Q8.
+- `rg PATTERN` with no path in a non-tty shell reads stdin and hangs. Always pass a path.
+
+## L11. A57 sweep: what matters (phone8, llama-cpp 0.6.0, 2026-10-10)
+With Vulkan -ngl 99 on SmolLM2-135M: Q4_0 gives the best tg (102 t/s, against 89 for Q8_0 and 83 for Q4_K_M). Flash-attn raises pp about 11% at equal tg. Threads 1, 2 and 3 are within noise once the GPU holds all layers. Batch and ubatch sizes stay within noise from 128 up (64 is about 15% slower on pp). Partial offload is worse than full: -ngl 24 gives 7 t/s tg, 16 gives 2.8, 8 gives 1.5. -ngl 0 with the Vulkan build loaded collapses to 0.2-0.8 t/s tg, so always use -ngl 99. Four back-to-back runs showed no thermal drift (tg128 80-82 t/s). Qwen2.5-0.5B Q4_K_M fits: tg 31-34 t/s, pp128 508, MemAvailable never below 1.9 GiB.
+
+## L12. DHCP can swap phone addresses
+After a reconnect, phone8 (u0_a414) answered on 192.168.1.7 with phone8's host key, and ssh refused it as a "changed host key". Confirm a device by its known host key plus its Termux user, and connect with HostKeyAlias, never by deleting known_hosts entries. Give the phones DHCP reservations.
+
 ## L-miryam-perf. On a 2-core laptop, use 2 threads, and the iGPU costs RAM (2026-10-10)
 llama-bench on miryam (i5-7200U, 2C/4T, HD 620), Qwen3.5-2B Q4_K_M, CPU only, fa on, 2 reps, spread shown as +/-:
 

@@ -12,6 +12,25 @@ All notable changes to familia are recorded here. The format follows [Keep a Cha
 ### Planned
 - Declarative configuration graph: models and agents declared explicitly and validated against measured hardware, with no silent model choice, no silent context inflation, and a loud failure on mismatch. Design draft: `docs/configuration-graph.md`. Format and commands TBD.
 
+## [0.1.0-rc1] - 2026-10-10
+
+Pre-release for outside testers; start with [TESTING.md](../../TESTING.md).
+
+### Added
+- `TESTING.md`: per-platform quickstart, validator/tests, hermes.sh, legacy GPU, phone Vulkan, registry, RAM-safety rules, known limitations.
+- Legacy GPU path for the GeForce 8600 GT (sm_11) on Windows: hand-written PTX through the CUDA driver API, whole-forward-pass on device (`gpu-legacy/smol_sm11.c`). SmolLM2-135M went from 4.5 to 15.3-16.9 tok/s, token-identical to the CPU (fused kernels, texture-cache classifier, per-shape rows-per-thread tuning, replay-based tuner). `gpu-legacy/LESSONS-LEARNED.md`, `gpu-legacy/SYNC-AUDIT.md`. (#24)
+- CPU coder + GPU decision node placement on qodesh: coder 1 thread pinned to CPU0 plus GPU node on CPU1, ~30 tok/s combined.
+- Android Vulkan: Xclipse 550 via the system libvulkan; SmolLM2-135M 66-79 tok/s vs ~30 on CPU (phone7, phone8).
+- miryam HD 620 Vulkan measurements (46 tok/s alone vs 101 on CPU; contention when run beside the coder). (#24)
+- Model registry (`registry/records.jsonl`, `scripts/registry.py` add/query/summarize/suggest/match/power/lint) and shareable hardware registry (`registry/hardware/`); the validator warns about nodes with no measurements.
+- LittleBit sub-1-bit pipeline: converter to `.lbit.gguf`, numpy reference runtime `lbref`, `scale_down.py --method littlebit`, sm_11 sign-matmul kernel spec. (#28)
+- Models catalog (`docs/models-catalog.md`). (#20)
+
+### Changed
+- LittleBit support ported to graph schema v2: `models.*.quant: littlebit`, runtime `kind: reference` with `quants: [littlebit]`; `validate_graph.py --args` refuses non-llama-server runtimes.
+- `scale_down.py --replace` repoints aliases to the scaled node.
+- `.gitignore` now excludes build outputs, logs and model files.
+
 ## [<VERSION>] - <DATE>
 
 First tagged release.

@@ -134,7 +134,8 @@ if [ -e /system/lib64/libvulkan.so ]; then
   export LD_LIBRARY_PATH="\$VK\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}"
   NGL="\${FAMILIA_NGL:-99}"
 fi
-exec llama-server -m "\$M" -ngl "\$NGL" --host "\${FAMILIA_BIND:-127.0.0.1}" --port "\${FAMILIA_PORT:-9941}" -c "\${FAMILIA_CTX:-2048}" \${FAMILIA_EXTRA:-}
+# Defaults from the 2026-10-10 A57 sweep (#34): 3 threads, flash-attn on; -ngl 99 on Vulkan (CPU ngl 0 on 0.6.0 collapses to <1 t/s tg).
+exec llama-server -m "\$M" -ngl "\$NGL" -t "\${FAMILIA_THREADS:-3}" -fa "\${FAMILIA_FA:-on}" --host "\${FAMILIA_BIND:-127.0.0.1}" --port "\${FAMILIA_PORT:-9941}" -c "\${FAMILIA_CTX:-2048}" \${FAMILIA_EXTRA:-}
 EOS
   chmod +x "$LAUNCH"
 fi
